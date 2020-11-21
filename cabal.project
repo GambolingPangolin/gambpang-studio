@@ -1,0 +1,3 @@
+packages:
+  ./animation/gambpang-studio-animation.cabal
+  ./works/gambpang-studio-works.cabal

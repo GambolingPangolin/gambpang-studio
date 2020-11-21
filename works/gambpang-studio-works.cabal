@@ -1,0 +1,45 @@
+cabal-version:       2.0
+name:                gambpang-studio-works
+version:             0.1.0.0
+license-file:        LICENSE
+author:              Ian Shipman
+maintainer:          ics@gambolingpangolin.com
+copyright:           Ian Shipman (c) 2020
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+
+library
+  default-language: Haskell2010
+  hs-source-dirs:   src/
+  ghc-options:      -Wall
+
+  exposed-modules:
+    GambPang.Animation.Bars
+    GambPang.Animation.Boxes
+    GambPang.Animation.ColorStyle
+    GambPang.Animation.Dots
+    GambPang.Animation.Scrollers
+    GambPang.Animation.Snowflake
+    GambPang.Animation.Utils
+
+  build-depends:
+      base                        >=4.13  && <4.15
+    , colour                     ^>=2.3.5
+    , containers                 ^>=0.6
+    , gambpang-studio-animation  ^>=0.1
+    , JuicyPixels                ^>=3.3
+    , transformers               ^>=0.5
+
+executable gambpang-studio-works
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall -O2 -threaded
+  build-depends:
+      async                      ^>=2.2
+    , base                        >=4.13 && <4.15
+    , containers                 ^>=0.6
+    , filepath                   ^>=1.4
+    , gambpang-studio-animation  ^>=0.1
+    , gambpang-studio-works
+    , JuicyPixels                ^>=3.3
+    , optparse-applicative       ^>=0.16

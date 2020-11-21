@@ -1,0 +1,8 @@
+cradle:
+  cabal:
+    - path: "./animation/src/"
+      component: "lib:gambpang-studio-animation"
+    - path: "./works/src/"
+      component: "lib:gambpang-studio-works"
+    - path: "./works/Main.hs"
+      component: "gambpang-studio-works:exe:gambpang-studio-works"
