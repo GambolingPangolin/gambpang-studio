@@ -1,6 +1,9 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module GambPang.Animation.Field2D (
     Field2D (..),
     PixelField,
+    point,
     valueAtPoint,
     fill,
     disc,
@@ -19,12 +22,13 @@ import GambPang.Animation.Utils (power)
 
 -- | A value parameterized by points in the plane
 newtype Field2D a = Field2D (Point -> a)
+    deriving (Functor, Applicative)
+
+point :: Field2D Point
+point = Field2D id
 
 valueAtPoint :: Point -> Field2D a -> a
 valueAtPoint pt (Field2D f) = f pt
-
-instance Functor Field2D where
-    fmap f (Field2D px) = Field2D $ f . px
 
 instance Rigged (Field2D a) where
     transform a (Field2D s) = Field2D $ s . applyAffineT (invertAffine a)

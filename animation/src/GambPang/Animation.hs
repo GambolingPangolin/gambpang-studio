@@ -9,6 +9,7 @@ module GambPang.Animation (
     displacement,
     pointToVector,
     Field2D (..),
+    point,
     valueAtPoint,
     Drawing,
 
