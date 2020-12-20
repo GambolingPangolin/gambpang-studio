@@ -38,17 +38,20 @@ import GambPang.Animation.ColorStyle (ColorStyle (..), Palette)
 import GambPang.Animation.Piece (AnimatedPiece, renderGif)
 import qualified GambPang.Animation.Piece as P
 import GambPang.Animation.Utils (dataUrl)
+import Lucid (HtmlT)
 import qualified Lucid as L
 import Lucid.Base (Html, commuteHtmlT, toHtml)
 
 style :: (ColorStyle -> Color) -> Css
 style palette = do
     C.body ? do
+        C.paddingLeft $ C.rem 20
         C.background bg
         C.color fg
-    C.h1 ? colorUnderline hlA
-    C.h2 ? colorUnderline hlB
-    "animation" C.** C.img ? C.border C.solid (C.px 1) fg
+    C.h1 ? C.u ? colorUnderline hlA
+    C.h2 ? C.u ? colorUnderline hlB
+    ".content" ? C.paddingLeft (C.rem 5)
+    ".animation" ? C.img ? C.border C.solid (C.px 1) fg
   where
     bg = palette Background
     fg = palette Foreground
@@ -57,8 +60,8 @@ style palette = do
 
 colorUnderline :: Color -> StyleM ()
 colorUnderline ulColor = do
-    C.textDecoration C.underline
-    C.textDecorationColor ulColor
+    C.textDecoration C.none
+    C.borderBottom C.solid (C.px 3) ulColor
 
 data VignetteDescription = VignetteDescription
     { vDescTitle :: Text
@@ -117,14 +120,23 @@ vignette v = commuteHtmlT . L.html_ $ do
             . toCssPalette
             $ palette
     L.body_ $ do
-        L.h1_ . toHtml $ vignetteGreeting v
-        L.p_ . toHtml $ vignetteMessage v
-        L.h2_ . toHtml $ vignetteTitle v
+        heading . toHtml $ vignetteGreeting v
+        L.p_ [L.class_ "content"] . toHtml $ vignetteMessage v
+        subheading . toHtml $ vignetteTitle v
         animationBytes <- lift $ BSL.toStrict <$> renderGif animation
-        L.div_ [L.class_ "animation"] $ L.img_ [L.src_ $ dataUrl "image/gif" animationBytes]
+        L.div_ [L.class_ "animation content"] $ L.img_ [L.src_ $ dataUrl "image/gif" animationBytes]
   where
     palette = vignettePalette v
     animation = (vignetteAnimation v){P.palette = palette}
+
+heading :: Applicative m => HtmlT m a -> HtmlT m a
+heading = L.h1_ . u_
+
+subheading :: Applicative m => HtmlT m a -> HtmlT m a
+subheading = L.h2_ . u_
+
+u_ :: Applicative m => HtmlT m a -> HtmlT m a
+u_ = L.term "u"
 
 toCssPalette :: (a -> Colour Double) -> a -> Color
 toCssPalette = (toCssColor .)

@@ -88,7 +88,7 @@ animationTask as path name = maybe notFound onRecord $ Map.lookup name as
 
 vignetteTask :: FilePath -> Vignette -> IO ()
 vignetteTask outPath v = do
-    TIO.putStrLn $ "Rendering: " <> vignetteTitle v
+    TIO.putStrLn $ "Rendering: " <> V.vignetteTitle v
     either
         onError
         (renderToFile outFile)
