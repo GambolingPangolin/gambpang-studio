@@ -18,6 +18,7 @@ module GambPang.Animation.ColorStyle (
 import Control.Exception (Exception)
 import Data.Colour (Colour)
 import qualified Data.Colour.Names as Names
+import Data.Colour.SRGB (sRGB24read)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
@@ -44,6 +45,7 @@ palettes =
     Map.fromList
         [ ("mellow", mellow)
         , ("snowy", snowy)
+        , ("sunrise", sunrise)
         , ("verdant", verdant)
         ]
 
@@ -60,6 +62,13 @@ snowy = \case
     Foreground -> Names.silver
     HighlightA -> Names.white
     HighlightB -> Names.cyan
+
+sunrise :: Palette
+sunrise = \case
+    Background -> sRGB24read "#49383e"
+    Foreground -> sRGB24read "#fe8a52"
+    HighlightA -> sRGB24read "#fdd981"
+    HighlightB -> sRGB24read "#fefcdf"
 
 verdant :: Palette
 verdant = \case
