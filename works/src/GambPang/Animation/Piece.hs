@@ -8,8 +8,11 @@ module GambPang.Animation.Piece (
 
 import Codec.Picture (GifLooping (LoopingForever), Image, encodeGifAnimation, pixelMap)
 import Codec.Picture.Types (PixelRGBA8, TransparentPixel (dropTransparency))
+import Data.Bifunctor (Bifunctor (first))
 import Data.ByteString.Lazy (ByteString)
 import Data.Colour (Colour)
+import Data.Text (Text)
+import qualified Data.Text as Text
 import GambPang.Animation (
     Animated,
     Drawing,
@@ -49,9 +52,10 @@ renderImageSequence piece = case source piece of
     bg = palette piece Background
     toColor = (`colorPixel` 0xff) . palette piece
 
-renderGif :: AnimatedPiece -> Either String ByteString
+renderGif :: AnimatedPiece -> Either Text ByteString
 renderGif piece =
-    encodeGifAnimation msDelay LoopingForever
+    first Text.pack
+        . encodeGifAnimation msDelay LoopingForever
         . fmap (pixelMap dropTransparency)
         $ renderImageSequence piece
   where

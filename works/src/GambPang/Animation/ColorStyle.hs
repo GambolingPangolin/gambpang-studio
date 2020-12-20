@@ -4,6 +4,7 @@
 module GambPang.Animation.ColorStyle (
     -- * Style types
     ColorStyle (..),
+    Palette,
     PaletteChoice (..),
     parsePalette,
 
@@ -24,7 +25,9 @@ import Data.Text (Text)
 data ColorStyle = Background | Foreground | HighlightA | HighlightB
     deriving (Eq, Ord, Enum, Show)
 
-data PaletteChoice = DefaultPalette | PaletteChoice (ColorStyle -> Colour Double)
+type Palette = ColorStyle -> Colour Double
+
+data PaletteChoice = DefaultPalette | PaletteChoice Palette
 
 newtype StyleException = UnknownPalette Text
     deriving (Eq, Show)
@@ -36,7 +39,7 @@ parsePalette name = maybe unknown (pure . PaletteChoice) $ Map.lookup name palet
   where
     unknown = Left $ UnknownPalette name
 
-palettes :: Map Text (ColorStyle -> Colour Double)
+palettes :: Map Text Palette
 palettes =
     Map.fromList
         [ ("mellow", mellow)
@@ -44,21 +47,21 @@ palettes =
         , ("verdant", verdant)
         ]
 
-mellow :: ColorStyle -> Colour Double
+mellow :: Palette
 mellow = \case
     Background -> Names.beige
     Foreground -> Names.chocolate
     HighlightA -> Names.orange
     HighlightB -> Names.yellow
 
-snowy :: ColorStyle -> Colour Double
+snowy :: Palette
 snowy = \case
     Background -> Names.navy
     Foreground -> Names.silver
     HighlightA -> Names.white
     HighlightB -> Names.cyan
 
-verdant :: ColorStyle -> Colour Double
+verdant :: Palette
 verdant = \case
     Background -> Names.darkgreen
     Foreground -> Names.sienna
