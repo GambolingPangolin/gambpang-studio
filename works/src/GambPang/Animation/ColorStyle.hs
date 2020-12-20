@@ -52,7 +52,7 @@ mellow = \case
     Background -> Names.beige
     Foreground -> Names.chocolate
     HighlightA -> Names.orange
-    HighlightB -> Names.yellow
+    HighlightB -> Names.gold
 
 snowy :: Palette
 snowy = \case

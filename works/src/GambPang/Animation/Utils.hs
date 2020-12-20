@@ -68,6 +68,6 @@ defaultAnimatedPiece anim =
         { source = AnimatedDrawing anim
         , viewFrame = defaultViewFrame
         , frameCount = 100
-        , framesPerSec = 33
+        , framesPerSec = 50
         , palette = mellow
         }

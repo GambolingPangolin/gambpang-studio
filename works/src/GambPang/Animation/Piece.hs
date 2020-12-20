@@ -59,4 +59,4 @@ renderGif piece =
         . fmap (pixelMap dropTransparency)
         $ renderImageSequence piece
   where
-    msDelay = floor $ 1000 / framesPerSec piece
+    msDelay = floor $ 100 / framesPerSec piece
