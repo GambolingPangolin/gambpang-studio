@@ -44,6 +44,7 @@ palettes :: Map Text Palette
 palettes =
     Map.fromList
         [ ("mellow", mellow)
+        , ("nightlights", nightlights)
         , ("snowy", snowy)
         , ("sunrise", sunrise)
         , ("verdant", verdant)
@@ -55,6 +56,13 @@ mellow = \case
     Foreground -> Names.chocolate
     HighlightA -> Names.orange
     HighlightB -> Names.gold
+
+nightlights :: Palette
+nightlights = \case
+    Background -> Names.black
+    Foreground -> Names.navy
+    HighlightA -> Names.yellow
+    HighlightB -> Names.white
 
 snowy :: Palette
 snowy = \case
@@ -74,5 +82,5 @@ verdant :: Palette
 verdant = \case
     Background -> Names.darkgreen
     Foreground -> Names.sienna
-    HighlightA -> Names.green
-    HighlightB -> Names.black
+    HighlightA -> Names.black
+    HighlightB -> Names.green

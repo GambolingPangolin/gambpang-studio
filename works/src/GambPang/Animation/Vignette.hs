@@ -52,11 +52,11 @@ style palette = do
 
     C.h1 ? do
         C.fontFamily [heavyFont] [C.serif]
-        C.u ? colorUnderline hlA
+        C.u ? colorUnderline hlB
 
     C.h2 ? do
         C.fontFamily [heavyFont] [C.serif]
-        C.u ? colorUnderline hlB
+        C.u ? colorUnderline hlA
 
     ".content" ? C.paddingLeft (C.rem 5)
     ".animation" ? C.img ? C.border C.solid (C.px 1) fg
