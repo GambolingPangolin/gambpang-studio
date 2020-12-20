@@ -22,7 +22,7 @@ import GambPang.Animation (
     reflect,
     rotateO,
     scale,
-    shift,
+    shiftLater,
     translate,
  )
 import GambPang.Animation.Drawing (Shape)
@@ -127,7 +127,7 @@ snowfield1 = D.union <$> sequenceA falls
     fallA = snowfall 5 (Time 0) (Time 0.5)
     fallB = snowfall 2 (Time 0) (Time 0.75)
 
-    mkFall t x = shift (Time t) . translateX x
+    mkFall t x = shiftLater (Time t) . translateX x
 
     translateX x = translate (Vector x 0)
 

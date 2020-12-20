@@ -23,7 +23,7 @@ import GambPang.Animation (
     pathProgram,
     piecewiseLinear,
     rotateO,
-    shift,
+    shiftEarlier,
     time,
     translate,
  )
@@ -104,7 +104,7 @@ uniformDotFieldSpec n r c =
 dots3 :: AnimatedPiece
 dots3 = defaultAnimatedPiece . translate v . fmap D.union $ traverse mkDot [0 .. 10]
   where
-    mkDot i = shift (Time $ i / 10) dot
+    mkDot i = shiftEarlier (Time $ i / 10) dot
     dot = followPath sinPath p0 <*> pure d
     sinPath = Animated $ \(Time t) -> let s = toCircular t in Point (500 * s) (200 * sin (2 * pi * s))
     v = Vector 0 250

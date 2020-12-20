@@ -9,7 +9,8 @@ module GambPang.Animation.Scene (
     time,
     compress,
     expand,
-    shift,
+    shiftEarlier,
+    shiftLater,
     backwards,
 ) where
 
@@ -38,10 +39,13 @@ compress a = timeControl $ \(Time t) -> Time (a * t)
 expand :: Double -> Animated a -> Animated a
 expand a = timeControl $ \(Time t) -> Time (t / a)
 
-shift :: Time -> Animated a -> Animated a
-shift (Time offset) = timeControl f
+shiftEarlier :: Time -> Animated a -> Animated a
+shiftEarlier (Time offset) = timeControl f
   where
     f (Time t) = Time $ t + offset
+
+shiftLater :: Time -> Animated a -> Animated a
+shiftLater (Time offset) = shiftEarlier . Time $ negate offset
 
 backwards :: Animated a -> Animated a
 backwards = timeControl f

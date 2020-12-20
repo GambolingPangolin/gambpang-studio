@@ -21,7 +21,7 @@ import GambPang.Animation (
     origin,
     rotateO,
     scale,
-    shift,
+    shiftEarlier,
     time,
     translate,
     valueAtTime,
@@ -78,8 +78,8 @@ bars2 =
     D.union
         <$> sequenceA
             [ rotatingMask
-            , shift (Time 0.33) rotatingMask
-            , shift (Time 0.66) rotatingMask
+            , shiftEarlier (Time 0.33) rotatingMask
+            , shiftEarlier (Time 0.66) rotatingMask
             ]
   where
     rotatingMask = D.mask <$> (circleMask <$> time) <*> pure (stripes 20 500)
@@ -91,8 +91,8 @@ bars3 =
     D.union
         <$> sequenceA
             [ element
-            , shift (Time 0.33) element
-            , shift (Time 0.66) element
+            , shiftEarlier (Time 0.33) element
+            , shiftEarlier (Time 0.66) element
             , pure bigBackground
             ]
   where

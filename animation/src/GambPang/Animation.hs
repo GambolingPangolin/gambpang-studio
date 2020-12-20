@@ -38,7 +38,8 @@ module GambPang.Animation (
     timeControl,
     expand,
     compress,
-    shift,
+    shiftEarlier,
+    shiftLater,
     cameraPan,
 
     -- * Bitmap

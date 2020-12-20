@@ -21,7 +21,7 @@ import GambPang.Animation (
     piecewiseLinear,
     rotateO,
     scale,
-    shift,
+    shiftEarlier,
     translate,
  )
 import qualified GambPang.Animation.Drawing as D
@@ -149,9 +149,9 @@ boxes3 =
                 [pure cornerElements, travA, travB, travC, travD]
   where
     travA = followPath path travCenter <*> pure traveler
-    travB = shift (Time 0.05) travA
-    travC = shift (Time 0.10) travA
-    travD = shift (Time 0.15) travA
+    travB = shiftEarlier (Time 0.05) travA
+    travC = shiftEarlier (Time 0.10) travA
+    travD = shiftEarlier (Time 0.15) travA
     path =
         makeCircular (Time 1)
             . piecewiseLinear
