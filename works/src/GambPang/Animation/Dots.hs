@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
 module GambPang.Animation.Dots (
@@ -7,10 +8,10 @@ module GambPang.Animation.Dots (
     dots3,
 ) where
 
-import Codec.Picture (Image, PixelRGBA8 (..))
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Text (Text)
 import GambPang.Animation (
     Animated (..),
     Point (..),
@@ -33,30 +34,35 @@ import GambPang.Animation.ColorStyle (
     PaletteChoice,
     snowy,
  )
-import GambPang.Animation.Utils (defaultRender, renderWithFrames, rotating)
+import GambPang.Animation.Piece (
+    AnimatedPiece (..),
+    AnimationSource (AnimatedDrawing),
+    applyPaletteChoice,
+ )
+import GambPang.Animation.Utils (defaultAnimatedPiece, defaultViewFrame, rotating)
 
-animations :: PaletteChoice -> Map String [Image PixelRGBA8]
+animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
-    Map.fromList
-        [ ("dots-1", dotsRender dots1)
-        , ("dots-2", dotsRender $ dots2 5)
-        , ("dots-3", dotsRender dots3)
-        , ("dots-4", renderWithFrames snowy paletteChoice 200 dots4)
-        ]
-  where
-    dotsRender = defaultRender snowy paletteChoice
+    applyPaletteChoice paletteChoice
+        <$> Map.fromList
+            [ ("dots-1", dots1)
+            , ("dots-2", dots2)
+            , ("dots-3", dots3)
+            , ("dots-4", dots4)
+            ]
 
-dots1 :: Animated (Drawing ColorStyle)
-dots1 = translate v' $ rotating 1 <*> pure s0
+dots1 :: AnimatedPiece
+dots1 = defaultAnimatedPiece . translate v' $ rotating 1 <*> pure s0
   where
     d = D.draw Foreground $ D.disc origin 10
     s0 = translate v d
     v = Vector 0 175
     v' = Vector 250 250
 
-dots2 :: Int -> Animated (Drawing ColorStyle)
-dots2 n = translate v $ union2 <$> movingDot <*> pure field
+dots2 :: AnimatedPiece
+dots2 = defaultAnimatedPiece $ translate v $ union2 <$> movingDot <*> pure field
   where
+    n = 5
     v = Vector offset offset
     offset = 50
     gapSize = 400 / fromIntegral (n - 1)
@@ -93,8 +99,8 @@ uniformDotFieldSpec :: Int -> Double -> c -> Map (Int, Int) (Double, c)
 uniformDotFieldSpec n r c =
     Map.fromList $ [((x, y), (r, c)) | x <- [0 .. n - 1], y <- [0 .. n - 1]]
 
-dots3 :: Animated (Drawing ColorStyle)
-dots3 = translate v . fmap D.union $ traverse mkDot [0 .. 10]
+dots3 :: AnimatedPiece
+dots3 = defaultAnimatedPiece . translate v . fmap D.union $ traverse mkDot [0 .. 10]
   where
     mkDot i = shift (Time $ i / 10) dot
     dot = followPath sinPath p0 <*> pure d
@@ -104,14 +110,22 @@ dots3 = translate v . fmap D.union $ traverse mkDot [0 .. 10]
     p0 = origin
     toCircular = snd . properFraction @_ @Int
 
-dots4 :: Animated (Drawing ColorStyle)
+dots4 :: AnimatedPiece
 dots4 =
-    translate v . D.union
-        <$> sequenceA
-            [ dotElement
-            , rotateO (2 * pi / 3) dotElement
-            , rotateO (4 * pi / 3) dotElement
-            ]
+    AnimatedPiece
+        { source =
+            AnimatedDrawing $
+                translate v . D.union
+                    <$> sequenceA
+                        [ dotElement
+                        , rotateO (2 * pi / 3) dotElement
+                        , rotateO (4 * pi / 3) dotElement
+                        ]
+        , viewFrame = defaultViewFrame
+        , frameCount = 200
+        , framesPerSec = 33
+        , palette = snowy
+        }
   where
     dotElement = rotateO <$> (mkAngle <$> time) <*> pure d
     d = D.draw Foreground $ D.disc pCenter 20

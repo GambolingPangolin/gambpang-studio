@@ -1,4 +1,4 @@
-cabal-version:       2.0
+cabal-version:       2.4
 name:                gambpang-studio-works
 version:             0.1.0.0
 license-file:        LICENSE
@@ -8,38 +8,46 @@ copyright:           Ian Shipman (c) 2020
 build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
-library
+common shared
   default-language: Haskell2010
-  hs-source-dirs:   src/
   ghc-options:      -Wall
+  build-depends:
+      base >=4.13  && <4.15
+    , bytestring >=0.10 && <0.12
+    , containers ^>=0.6
+    , gambpang-studio-animation ^>=0.1
+    , JuicyPixels ^>=3.3
+    , text ^>=1.2
+
+library
+  import: shared
+  hs-source-dirs: src/
 
   exposed-modules:
+    GambPang.Animation.ColorStyle
+    GambPang.Animation.Piece
+    GambPang.Animation.Utils
+
     GambPang.Animation.Bars
     GambPang.Animation.Boxes
-    GambPang.Animation.ColorStyle
     GambPang.Animation.Dots
     GambPang.Animation.Scrollers
     GambPang.Animation.Snowflake
-    GambPang.Animation.Utils
 
   build-depends:
-      base                        >=4.13  && <4.15
-    , colour                     ^>=2.3.5
-    , containers                 ^>=0.6
-    , gambpang-studio-animation  ^>=0.1
-    , JuicyPixels                ^>=3.3
-    , transformers               ^>=0.5
+      aeson ^>=1.5
+    , base64-bytestring >=1.0 && <1.3
+    , colour ^>=2.3.5
+    , lucid ^>=2.9
+    , clay ^>=0.13
+    , transformers ^>=0.5
 
 executable gambpang-studio-works
-  main-is:             Main.hs
-  default-language:    Haskell2010
-  ghc-options:         -Wall -O2 -threaded
+  import: shared
+  main-is: Main.hs
+  ghc-options: -O2 -threaded
   build-depends:
-      async                      ^>=2.2
-    , base                        >=4.13 && <4.15
-    , containers                 ^>=0.6
-    , filepath                   ^>=1.4
-    , gambpang-studio-animation  ^>=0.1
+      async ^>=2.2
+    , filepath ^>=1.4
     , gambpang-studio-works
-    , JuicyPixels                ^>=3.3
-    , optparse-applicative       ^>=0.16
+    , optparse-applicative ^>=0.16

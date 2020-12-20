@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
 module GambPang.Animation.Scrollers (
@@ -6,45 +7,59 @@ module GambPang.Animation.Scrollers (
     animations,
 ) where
 
-import Codec.Picture (Image, PixelRGBA8)
-import Data.Colour.Names (beige, chocolate)
 import Data.Map (Map)
 import qualified Data.Map as Map
-
+import Data.Text (Text)
 import GambPang.Animation (
     Animated (..),
     Field2D (Field2D),
     Point (Point),
     Time (..),
     Vector (..),
-    colorPixel,
-    renderAnimField2D,
     rotateO,
     scale,
     translate,
  )
-import GambPang.Animation.ColorStyle (PaletteChoice)
+
+import GambPang.Animation.ColorStyle (
+    ColorStyle (..),
+    PaletteChoice,
+    mellow,
+ )
+import GambPang.Animation.Piece (
+    AnimatedPiece (..),
+    AnimationSource (AnimatedField2D),
+    applyPaletteChoice,
+ )
 import GambPang.Animation.Utils (defaultViewFrame)
 
-animations :: PaletteChoice -> Map String [Image PixelRGBA8]
-animations _ =
-    Map.fromList
-        [ ("scroller-90", scroller90)
-        , ("scroller-30", scroller30)
-        ]
+animations :: PaletteChoice -> Map Text AnimatedPiece
+animations pc =
+    applyPaletteChoice pc
+        <$> Map.fromList
+            [ ("scroller-90", scroller90)
+            , ("scroller-30", scroller30)
+            ]
 
-scroller90 :: [Image PixelRGBA8]
+scroller90 :: AnimatedPiece
 scroller90 = scroller (pi / 2) 20
 
-scroller30 :: [Image PixelRGBA8]
+scroller30 :: AnimatedPiece
 scroller30 = scroller (pi / 6) 10
 
-scroller :: Double -> Double -> [Image PixelRGBA8]
-scroller a w = renderAnimField2D 50 defaultViewFrame $ scrollerAnim w a field
+scroller :: Double -> Double -> AnimatedPiece
+scroller a w =
+    AnimatedPiece
+        { source = AnimatedField2D $ scrollerAnim w a field
+        , viewFrame = defaultViewFrame
+        , frameCount = 50
+        , framesPerSec = 33
+        , palette = mellow
+        }
   where
-    field = infiniteField (colorPixel beige 0xff) (colorPixel chocolate 0xff)
+    field = infiniteField Background Foreground
 
-scrollerAnim :: Double -> Double -> Field2D PixelRGBA8 -> Animated (Field2D PixelRGBA8)
+scrollerAnim :: Double -> Double -> Field2D a -> Animated (Field2D a)
 scrollerAnim zoom a s = Animated $ \(Time t) ->
     translate (vec t) $ scale zoom zoom rotatedScene
   where

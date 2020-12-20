@@ -1,9 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module GambPang.Animation.Boxes where
 
-import Codec.Picture (Image, PixelRGBA8)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Text (Text)
 import GambPang.Animation (
     Animated (..),
     Drawing,
@@ -24,12 +26,13 @@ import GambPang.Animation (
  )
 import qualified GambPang.Animation.Drawing as D
 
-import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, mellow)
-import GambPang.Animation.Utils (defaultRender, rotating, union2)
+import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice)
+import GambPang.Animation.Piece (AnimatedPiece, applyPaletteChoice)
+import GambPang.Animation.Utils (defaultAnimatedPiece, rotating, union2)
 
-animations :: PaletteChoice -> Map String [Image PixelRGBA8]
+animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
-    defaultRender mellow paletteChoice
+    applyPaletteChoice paletteChoice . defaultAnimatedPiece
         <$> Map.fromList
             [ ("boxes-1", boxes1)
             , ("boxes-2", boxes2)

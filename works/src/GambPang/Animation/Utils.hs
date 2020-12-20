@@ -1,14 +1,19 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module GambPang.Animation.Utils (
     rotating,
     translations,
-    defaultViewFrame,
     union2,
-    defaultRender,
-    renderWithFrames,
+    dataUrl,
+    defaultViewFrame,
+    defaultAnimatedPiece,
 ) where
 
-import Codec.Picture (Image, PixelRGBA8)
-import Data.Colour (Colour)
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Base64 as B64
+import qualified Data.ByteString.Char8 as BS8
+import Data.Text (Text)
+import qualified Data.Text as Text
 import GambPang.Animation (
     Animated,
     Drawing,
@@ -16,7 +21,6 @@ import GambPang.Animation (
     Time (Time),
     Vector,
     ViewFrame (..),
-    renderAnimDrawing,
     rotateO,
     time,
     translate,
@@ -24,29 +28,10 @@ import GambPang.Animation (
 import qualified GambPang.Animation.Drawing as D
 
 import GambPang.Animation.ColorStyle (
-    ColorStyle (Background),
-    PaletteChoice (..),
+    ColorStyle,
+    mellow,
  )
-
-defaultRender ::
-    (ColorStyle -> Colour Double) ->
-    PaletteChoice ->
-    Animated (Drawing ColorStyle) ->
-    [Image PixelRGBA8]
-defaultRender defaultPalette paletteChoice = renderWithFrames defaultPalette paletteChoice 100
-
-renderWithFrames ::
-    (ColorStyle -> Colour Double) ->
-    PaletteChoice ->
-    Int ->
-    Animated (Drawing ColorStyle) ->
-    [Image PixelRGBA8]
-renderWithFrames defaultPalette paletteChoice n = renderAnimDrawing n defaultViewFrame bg style
-  where
-    bg = style Background
-    style = case paletteChoice of
-        DefaultPalette -> defaultPalette
-        PaletteChoice somePalette -> somePalette
+import GambPang.Animation.Piece (AnimatedPiece (..), AnimationSource (AnimatedDrawing))
 
 defaultViewFrame :: ViewFrame
 defaultViewFrame =
@@ -71,3 +56,18 @@ rotating r = rot <$> time
 
 translations :: (Functor f, Rigged b) => b -> f Vector -> f b
 translations s = fmap (`translate` s)
+
+dataUrl :: Text -> ByteString -> Text
+dataUrl mime content = "data:" <> mime <> ";base64," <> b64 content
+  where
+    b64 = Text.pack . BS8.unpack . B64.encode
+
+defaultAnimatedPiece :: Animated (Drawing ColorStyle) -> AnimatedPiece
+defaultAnimatedPiece anim =
+    AnimatedPiece
+        { source = AnimatedDrawing anim
+        , viewFrame = defaultViewFrame
+        , frameCount = 100
+        , framesPerSec = 33
+        , palette = mellow
+        }

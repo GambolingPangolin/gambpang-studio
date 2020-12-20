@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module GambPang.Animation.ColorStyle (
     -- * Style types
@@ -7,6 +8,7 @@ module GambPang.Animation.ColorStyle (
     parsePalette,
 
     -- * Palettes
+    palettes,
     mellow,
     snowy,
     verdant,
@@ -15,23 +17,32 @@ module GambPang.Animation.ColorStyle (
 import Control.Exception (Exception)
 import Data.Colour (Colour)
 import qualified Data.Colour.Names as Names
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+import Data.Text (Text)
 
 data ColorStyle = Background | Foreground | HighlightA | HighlightB
     deriving (Eq, Ord, Enum, Show)
 
 data PaletteChoice = DefaultPalette | PaletteChoice (ColorStyle -> Colour Double)
 
-newtype StyleException = UnknownPalette String
+newtype StyleException = UnknownPalette Text
     deriving (Eq, Show)
 
 instance Exception StyleException
 
-parsePalette :: String -> Either StyleException PaletteChoice
-parsePalette name = fmap PaletteChoice $ case name of
-    "mellow" -> pure mellow
-    "snowy" -> pure snowy
-    "verdant" -> pure verdant
-    s -> Left $ UnknownPalette s
+parsePalette :: Text -> Either StyleException PaletteChoice
+parsePalette name = maybe unknown (pure . PaletteChoice) $ Map.lookup name palettes
+  where
+    unknown = Left $ UnknownPalette name
+
+palettes :: Map Text (ColorStyle -> Colour Double)
+palettes =
+    Map.fromList
+        [ ("mellow", mellow)
+        , ("snowy", snowy)
+        , ("verdant", verdant)
+        ]
 
 mellow :: ColorStyle -> Colour Double
 mellow = \case

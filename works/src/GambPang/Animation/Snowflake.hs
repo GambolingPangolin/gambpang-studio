@@ -1,13 +1,13 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module GambPang.Animation.Snowflake (
     animations,
 ) where
 
-import Codec.Picture (Image, PixelRGBA8)
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid (Endo (..))
+import Data.Text (Text)
 import GambPang.Animation (
     Animated (..),
     Drawing,
@@ -29,11 +29,13 @@ import GambPang.Animation.Drawing (Shape)
 import qualified GambPang.Animation.Drawing as D
 
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, snowy)
-import GambPang.Animation.Utils (defaultRender, rotating, translations)
+import GambPang.Animation.Piece (AnimatedPiece (palette), applyPaletteChoice)
+import GambPang.Animation.Utils (rotating, translations)
+import qualified GambPang.Animation.Utils as U
 
-animations :: PaletteChoice -> Map String [Image PixelRGBA8]
+animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
-    defaultRender snowy paletteChoice
+    applyPaletteChoice paletteChoice . defaultAnimatedPiece
         <$> Map.fromList
             [ ("snowflake-1", snowflake1)
             , ("snowfield-1", snowfield1)
@@ -128,3 +130,6 @@ snowfield1 = D.union <$> sequenceA falls
     mkFall t x = shift (Time t) . translateX x
 
     translateX x = translate (Vector x 0)
+
+defaultAnimatedPiece :: Animated (Drawing ColorStyle) -> AnimatedPiece
+defaultAnimatedPiece d = (U.defaultAnimatedPiece d){palette = snowy}
