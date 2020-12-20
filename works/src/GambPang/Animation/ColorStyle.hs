@@ -11,7 +11,9 @@ module GambPang.Animation.ColorStyle (
     -- * Palettes
     palettes,
     mellow,
+    nightlights,
     snowy,
+    sunrise,
     verdant,
 ) where
 
@@ -60,7 +62,7 @@ mellow = \case
 nightlights :: Palette
 nightlights = \case
     Background -> Names.black
-    Foreground -> Names.navy
+    Foreground -> Names.blue
     HighlightA -> Names.yellow
     HighlightB -> Names.white
 

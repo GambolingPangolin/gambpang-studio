@@ -41,6 +41,7 @@ library
     GambPang.Animation.Dots
     GambPang.Animation.Scrollers
     GambPang.Animation.Snowflake
+    GambPang.Animation.Symmetry
 
   other-modules:
     GambPang.Files

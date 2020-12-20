@@ -27,6 +27,7 @@ import qualified GambPang.Animation.Dots as Dots
 import GambPang.Animation.Piece (AnimatedPiece, renderGif)
 import qualified GambPang.Animation.Scrollers as Scr
 import qualified GambPang.Animation.Snowflake as Snowflake
+import qualified GambPang.Animation.Symmetry as Symmetry
 import GambPang.Animation.Vignette (Vignette, VignetteDescription, fromDescription)
 import qualified GambPang.Animation.Vignette as V
 
@@ -130,8 +131,12 @@ getVignetteDefs = Y.decodeFileEither @[VignetteDescription] >=> either onDecodeF
 
 mkAnimations :: PaletteChoice -> Map Text AnimatedPiece
 mkAnimations paletteChoice =
-    Bars.animations paletteChoice
-        <> Dots.animations paletteChoice
-        <> Scr.animations paletteChoice
-        <> Boxes.animations paletteChoice
-        <> Snowflake.animations paletteChoice
+    foldMap
+        ($ paletteChoice)
+        [ Bars.animations
+        , Dots.animations
+        , Scr.animations
+        , Boxes.animations
+        , Snowflake.animations
+        , Symmetry.animations
+        ]
