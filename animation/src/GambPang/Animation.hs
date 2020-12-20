@@ -32,10 +32,12 @@ module GambPang.Animation (
     circularPath,
     makeCircular,
     Animated (..),
+    valueAtTime,
     Motion,
     time,
     timeControl,
-    valueAtTime,
+    expand,
+    compress,
     shift,
     cameraPan,
 

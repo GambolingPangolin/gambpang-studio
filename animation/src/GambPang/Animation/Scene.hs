@@ -7,6 +7,8 @@ module GambPang.Animation.Scene (
     valueAtTime,
     timeControl,
     time,
+    compress,
+    expand,
     shift,
     backwards,
 ) where
@@ -27,6 +29,14 @@ valueAtTime t (Animated f) = f t
 
 timeControl :: (Time -> Time) -> Animated a -> Animated a
 timeControl f (Animated a) = Animated $ a . f
+
+-- | Speed up an animation.  So `compress 2 a` runs `a` and double speed (half time).
+compress :: Double -> Animated a -> Animated a
+compress a = timeControl $ \(Time t) -> Time (a * t)
+
+-- | Slow down an animation.  So `expand 2 a` makes `a` run in twice the time (half speed).
+expand :: Double -> Animated a -> Animated a
+expand a = timeControl $ \(Time t) -> Time (t / a)
 
 shift :: Time -> Animated a -> Animated a
 shift (Time offset) = timeControl f
