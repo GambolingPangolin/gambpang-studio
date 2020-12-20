@@ -14,6 +14,7 @@ import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
     Animated (..),
+    Path,
     Point (..),
     Time (..),
     Vector (..),
@@ -39,7 +40,7 @@ import GambPang.Animation.Piece (
     AnimationSource (AnimatedDrawing),
     applyPaletteChoice,
  )
-import GambPang.Animation.Utils (defaultAnimatedPiece, defaultViewFrame, rotating)
+import GambPang.Animation.Utils (defaultAnimatedPiece, defaultViewFrame, originViewFrame, rotating)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -49,6 +50,7 @@ animations paletteChoice =
             , ("dots-2", dots2)
             , ("dots-3", dots3)
             , ("dots-4", dots4)
+            , ("dots-5", dots5)
             ]
 
 dots1 :: AnimatedPiece
@@ -136,3 +138,55 @@ dots4 =
     pCenter = Point 100 0
     v = Vector 250 250
     m = 2
+
+-- | In which dots coil around an annulus
+dots5 :: AnimatedPiece
+dots5 = piece{viewFrame = originViewFrame, frameCount = 500}
+  where
+    piece = defaultAnimatedPiece $ withSwapping isAboveAnnulus (pure annulus) coilingDot
+    annulus = D.exclude innerCircle $ D.draw Foreground outerCircle
+    outerCircle = D.disc origin rOuter
+    innerCircle = D.disc origin rInner
+
+    rInner = 150
+    rOuter = 200
+    rCoiler = 20
+
+    coiler = D.draw HighlightA $ D.disc origin rCoiler
+
+    rInnerPath = rInner - rCoiler - 5
+    rOuterPath = rOuter + rCoiler + 5
+
+    coilingDot = followPath (toroidalPath rInnerPath rOuterPath verticalWindingNumber 1) origin <*> pure coiler
+    isAboveAnnulus (Time t) = sin (2 * pi * verticalWindingNumber * t) > 0
+
+    verticalWindingNumber = 5
+
+    withSwapping criterion x y = implementLayering criterion <$> time <*> x <*> y
+
+    implementLayering criterion t x y
+        | criterion t = D.union [y, x]
+        | otherwise = D.union [x, y]
+
+toroidalPath ::
+    -- | Inner radius
+    Double ->
+    -- | Outer radius
+    Double ->
+    -- | Winding number (vertical)
+    Double ->
+    -- | Winding number (longitudinal)
+    Double ->
+    Path
+toroidalPath r1 r2 n m = Animated $ \(Time t) -> toroidalProjection r1 r2 (a1 t, a2 t)
+  where
+    a1 = (2 * pi * m *)
+    a2 = (2 * pi * n *)
+
+toroidalProjection :: Double -> Double -> (Double, Double) -> Point
+toroidalProjection r1 r2 (a1, a2) = Point x y
+  where
+    x = r * cos a1
+    y = r * sin a1
+    r = r1 + (r2 - r1) * u
+    u = (1 + cos a2) / 2

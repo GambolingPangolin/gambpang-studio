@@ -6,6 +6,7 @@ module GambPang.Animation.Utils (
     union2,
     dataUrl,
     defaultViewFrame,
+    originViewFrame,
     defaultAnimatedPiece,
 ) where
 
@@ -41,6 +42,9 @@ defaultViewFrame =
         , viewFrameHeight = 500
         , endTime = Time 1
         }
+
+originViewFrame :: ViewFrame
+originViewFrame = defaultViewFrame{lowerLeft = (-250, -250)}
 
 union2 :: Drawing color -> Drawing color -> Drawing color
 union2 x y = D.union [x, y]
