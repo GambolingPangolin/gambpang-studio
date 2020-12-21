@@ -24,7 +24,7 @@ module GambPang.Animation.LinearAlgebra (
 
 import GambPang.Animation.Utils (power)
 
-data Point = Point {pointX :: Double, pointY :: Double}
+data Point = Point {pointX :: !Double, pointY :: !Double}
     deriving (Eq, Show)
 
 origin :: Point
@@ -52,7 +52,7 @@ displacement p1 p2 = Vector dx dy
     dx = x2 - x1
     dy = y2 - y1
 
-data Vector = Vector {displacementX :: Double, displacementY :: Double}
+data Vector = Vector {displacementX :: !Double, displacementY :: !Double}
     deriving (Eq, Show)
 
 instance Semigroup Vector where
@@ -78,12 +78,12 @@ dual :: Vector -> Point -> Double
 dual (Vector dx dy) (Point x y) = dy * x - dx * y
 
 data AffineTransformation = AffineTransformation
-    { affine11 :: Double
-    , affine12 :: Double
-    , affine13 :: Double
-    , affine21 :: Double
-    , affine22 :: Double
-    , affine23 :: Double
+    { affine11 :: !Double
+    , affine12 :: !Double
+    , affine13 :: !Double
+    , affine21 :: !Double
+    , affine22 :: !Double
+    , affine23 :: !Double
     }
     deriving (Eq, Show)
 

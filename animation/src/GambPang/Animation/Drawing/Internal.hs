@@ -46,11 +46,11 @@ import GambPang.Animation.LinearAlgebra (
 import GambPang.Animation.Rigging (Rigged (..))
 
 data Drawing color
-    = DrawShape color Shape
+    = DrawShape color !Shape
     | -- | Earlier items overlap later items
       Union [Drawing color]
-    | Mask Shape (Drawing color)
-    | Exclude Shape (Drawing color)
+    | Mask !Shape (Drawing color)
+    | Exclude !Shape (Drawing color)
     deriving (Eq, Show)
 
 instance Rigged (Drawing color) where
@@ -82,12 +82,12 @@ transformDrawing t = \case
     Mask m s -> Mask (transformShape t m) (transformDrawing t s)
     Exclude m s -> Exclude (transformShape t m) (transformDrawing t s)
 
-data EllipseSpec = EllipseSpec Double Double Double Double
+data EllipseSpec = EllipseSpec !Double !Double !Double !Double
     deriving (Eq, Show)
 
 data Shape
-    = Ellipse Point EllipseSpec
-    | Parallelogram Point Vector Vector
+    = Ellipse !Point !EllipseSpec
+    | Parallelogram !Point !Vector !Vector
     | Polygon [Point]
     deriving (Eq, Show)
 
