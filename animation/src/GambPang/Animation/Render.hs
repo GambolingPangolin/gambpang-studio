@@ -21,6 +21,7 @@ import Codec.Picture.Types (
  )
 import Control.Monad (foldM, void)
 import Control.Monad.ST (ST, runST)
+import Control.Parallel.Strategies (parList, rpar, using)
 import qualified Data.ByteString.Lazy as BSL
 import Data.Colour (Colour)
 import qualified Data.Map.Merge.Strict as Map
@@ -88,7 +89,7 @@ renderAnimDrawing n vf bg getColor (Animated a) = runST $ do
     img <- thawImage initialImage
     animationFrames <$> foldM (calcImage vf bg img) initialADState drawings
   where
-    drawings = mapColor getColor . a <$> timeSamples vf n
+    drawings = (mapColor getColor . a <$> timeSamples vf n) `using` parList rpar
     initialImage =
         generateImage (\_ _ -> colorPixel bg 0xFF) (viewFrameWidth vf) (viewFrameHeight vf)
 
