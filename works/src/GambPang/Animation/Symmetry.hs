@@ -111,14 +111,14 @@ pentagon1 =
         { source = AnimatedDrawing . resize $ D.union <$> sequenceA [segments, pure underlayer]
         , viewFrame = originViewFrame
         , framesPerSec = 50
-        , frameCount = 50 * 60
+        , frameCount = 100
         , palette = nightlights
         }
   where
     segments = animConcat . take 5 $ animatePermutation 5 ts <$> permutations [1 .. 5]
     ts = regularTriangleSet 5
     underlayer = D.draw HighlightA $ regularPolygon 5
-    resize = scale 120 120
+    resize = scale 120
 
 animatePermutation :: Int -> [TriangularSegment] -> [Int] -> Animated (Drawing ColorStyle)
 animatePermutation n ts ps = D.union <$> zipWithM (animateTriangle n) ts ps
@@ -142,15 +142,14 @@ slideTriangleOut :: TriangularSegment -> Double -> Animated TriangularSegment
 slideTriangleOut ts scalingFactor = getTranslation <$> time <*> pure ts
   where
     p = handlePoint ts
-    getTranslation (Time t) = translate . applyScale t $ pointToVector p
-    applyScale t = scale (t * scalingFactor) (t * scalingFactor)
+    getTranslation (Time t) = translate . scale (t * scalingFactor) $ pointToVector p
 
 -- | Move a triangle to its destination, while rotating it as appropriate
 rotateAndSlide :: Int -> Int -> TriangularSegment -> Animated TriangularSegment
 rotateAndSlide n ix ts = applyTranslation <*> (applyRotation <*> pure ts)
   where
     applyTranslation = translate . getDisplacement <$> time
-    getDisplacement (Time t) = scale t t $ displacement p0 p1
+    getDisplacement (Time t) = scale t $ displacement p0 p1
 
     applyRotation = rotateAboutHandle . getAngle <$> time
     getAngle (Time t) = 2 * pi * t * fromIntegral (ix - pos0) / fromIntegral n

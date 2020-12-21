@@ -61,9 +61,9 @@ scroller a w =
 
 scrollerAnim :: Double -> Double -> Field2D a -> Animated (Field2D a)
 scrollerAnim zoom a s = Animated $ \(Time t) ->
-    translate (vec t) $ scale zoom zoom rotatedScene
+    translate (vec t) $ scale zoom rotatedScene
   where
-    vec t = let z = 2 * zoom * t in scale z z v
+    vec t = let z = 2 * zoom * t in scale z v
     v = rotateO a $ Vector 1 0
     rotatedScene = rotateO a s
 

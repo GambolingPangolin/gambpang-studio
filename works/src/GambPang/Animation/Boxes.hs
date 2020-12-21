@@ -134,7 +134,7 @@ boxes2 = center300 $ union2 <$> Animated rotator <*> pure backer
 
     rotator (Time t) = D.draw HighlightB . D.polygon $ rotatorVertices t
     rotatorVertices t =
-        scale 300 300
+        scale 300
             <$> [ Point 0 t
                 , Point t 1
                 , Point 1 (1 - t)
@@ -167,7 +167,7 @@ center300 :: Rigged a => a -> a
 center300 = translate $ Vector 100 100
 
 defaultZoom :: Rigged a => a -> a
-defaultZoom = scale 10 10
+defaultZoom = scale 10
 
 boxes4 :: Animated (Drawing ColorStyle)
 boxes4 = fastRegion $ annulus 0 200

@@ -42,7 +42,7 @@ animations paletteChoice =
             ]
 
 bars1 :: Animated (Drawing ColorStyle)
-bars1 = translate v . D.mask sqMask . scale 400 400 . D.union <$> layers
+bars1 = translate v . D.mask sqMask . scale 400 . D.union <$> layers
   where
     sqMask = D.rectangle 400 400
     v = Vector 50 50

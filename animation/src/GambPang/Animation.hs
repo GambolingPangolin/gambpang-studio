@@ -21,6 +21,7 @@ module GambPang.Animation (
     rotate,
     reflect,
     scale,
+    scaleXY,
 
     -- * Animation
     Time (..),

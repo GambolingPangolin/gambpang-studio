@@ -5,6 +5,7 @@ module GambPang.Animation.Rigging (
     rotateO,
     rotate,
     scale,
+    scaleXY,
     reflect,
     followPath,
     cameraPan,
@@ -46,7 +47,7 @@ rotate p a = translate vp . rotateO a . translate (negateV vp)
   where
     vp = pointToVector p
 
-scale ::
+scaleXY ::
     Rigged a =>
     -- | x-scaling factor
     Double ->
@@ -54,7 +55,10 @@ scale ::
     Double ->
     a ->
     a
-scale sx sy = transform $ scaling sx sy
+scaleXY sx sy = transform $ scaling sx sy
+
+scale :: Rigged a => Double -> a -> a
+scale a = scaleXY a a
 
 -- | Reflect across a line
 reflect ::

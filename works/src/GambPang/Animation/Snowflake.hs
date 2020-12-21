@@ -64,7 +64,7 @@ animatedSnowflake cuts = scaleAndCenter <$> (rotating 1 <*> pure snowflake)
   where
     snowflake = toSnowflake . applyCuts . D.draw Foreground $ D.disc origin 1
     applyCuts = appEndo $ foldMap (Endo . D.exclude) cuts
-    scaleAndCenter = translate v . scale 150 150
+    scaleAndCenter = translate v . scale 150
     v = Vector 250 250
 
 snowflake1 :: Animated (Drawing ColorStyle)
@@ -88,7 +88,7 @@ snowflake1 =
             ]
     lineB =
         translations
-            (scale 0.5 0.5 r')
+            (scale 0.5 r')
             [Vector 0.15 0, Vector 0.45 0, Vector 0.75 0]
 
 snowfall ::
