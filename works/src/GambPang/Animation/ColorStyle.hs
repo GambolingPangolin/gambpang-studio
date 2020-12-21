@@ -10,6 +10,7 @@ module GambPang.Animation.ColorStyle (
 
     -- * Palettes
     palettes,
+    cubs,
     mellow,
     nightlights,
     snowy,
@@ -45,12 +46,20 @@ parsePalette name = maybe unknown (pure . PaletteChoice) $ Map.lookup name palet
 palettes :: Map Text Palette
 palettes =
     Map.fromList
-        [ ("mellow", mellow)
+        [ ("cubs", cubs)
+        , ("mellow", mellow)
         , ("nightlights", nightlights)
         , ("snowy", snowy)
         , ("sunrise", sunrise)
         , ("verdant", verdant)
         ]
+
+cubs :: Palette
+cubs = \case
+    Background -> Names.blue
+    Foreground -> Names.red
+    HighlightA -> Names.grey
+    HighlightB -> Names.white
 
 mellow :: Palette
 mellow = \case

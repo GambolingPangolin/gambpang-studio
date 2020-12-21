@@ -17,32 +17,36 @@ import GambPang.Animation (
     makeCircular,
     negateV,
     norm,
+    origin,
     pathProgram,
     piecewiseLinear,
     rotateO,
     scale,
     shiftEarlier,
+    shiftLater,
+    time,
     translate,
  )
 import qualified GambPang.Animation.Drawing as D
 
-import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice)
-import GambPang.Animation.Piece (AnimatedPiece, applyPaletteChoice)
-import GambPang.Animation.Utils (defaultAnimatedPiece, rotating, union2)
+import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs)
+import GambPang.Animation.Piece (AnimatedPiece (..), applyPaletteChoice)
+import GambPang.Animation.Utils (defaultAnimatedPiece, originViewFrame, rotating, union2)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
-    applyPaletteChoice paletteChoice . defaultAnimatedPiece
+    applyPaletteChoice paletteChoice
         <$> Map.fromList
             [ ("boxes-1", boxes1)
             , ("boxes-2", boxes2)
             , ("boxes-3", boxes3)
             , ("boxes-4", boxes4)
             , ("boxes-5", boxes5)
+            , ("boxes-6", boxes6)
             ]
 
-boxes1 :: Animated (Drawing ColorStyle)
-boxes1 = center300 . defaultZoom $ union2 cornerElements <$> travelers
+boxes1 :: AnimatedPiece
+boxes1 = defaultAnimatedPiece . center300 . defaultZoom $ union2 cornerElements <$> travelers
   where
     travelers =
         D.union
@@ -127,8 +131,8 @@ darkRect :: Double -> Double -> Drawing ColorStyle
 darkRect w h = D.draw Foreground $ D.rectangle w h
 
 -- | Nested boxes where the inner box rotates
-boxes2 :: Animated (Drawing ColorStyle)
-boxes2 = center300 $ union2 <$> Animated rotator <*> pure backer
+boxes2 :: AnimatedPiece
+boxes2 = defaultAnimatedPiece . center300 $ union2 <$> Animated rotator <*> pure backer
   where
     backer = D.draw HighlightA $ D.rectangle 300 300
 
@@ -141,9 +145,9 @@ boxes2 = center300 $ union2 <$> Animated rotator <*> pure backer
                 , Point (1 - t) 0
                 ]
 
-boxes3 :: Animated (Drawing ColorStyle)
+boxes3 :: AnimatedPiece
 boxes3 =
-    center300 . defaultZoom $
+    defaultAnimatedPiece . center300 . defaultZoom $
         D.union
             <$> sequenceA
                 [pure cornerElements, travA, travB, travC, travD]
@@ -169,11 +173,11 @@ center300 = translate $ Vector 100 100
 defaultZoom :: Rigged a => a -> a
 defaultZoom = scale 10
 
-boxes4 :: Animated (Drawing ColorStyle)
-boxes4 = fastRegion $ annulus 0 200
+boxes4 :: AnimatedPiece
+boxes4 = defaultAnimatedPiece . fastRegion $ annulus 0 200
 
-boxes5 :: Animated (Drawing ColorStyle)
-boxes5 = fastRegion $ annulus 100 225
+boxes5 :: AnimatedPiece
+boxes5 = defaultAnimatedPiece . fastRegion $ annulus 100 225
 
 annulus :: Ord a => a -> a -> a -> Bool
 annulus innerR outerR z = innerR <= z && z <= outerR
@@ -194,3 +198,52 @@ fastRegion inRegion = D.union <$> traverse spinner spinCoords
         | inRegion $ adjNorm v = 2
         | otherwise = 1
     adjNorm v = norm $ v <> negateV (Vector 250 250)
+
+-- | In which boxes migrate from the upper left to the lower right, first growing then shrinking
+boxes6 :: AnimatedPiece
+boxes6 =
+    piece
+        { viewFrame = originViewFrame
+        , palette = cubs
+        , framesPerSec = 35
+        , frameCount = 200
+        }
+  where
+    piece = defaultAnimatedPiece . shiftLater (Time 1) $ D.union <$> sequenceA travelers
+
+    travelerPair =
+        [ travelingBox Foreground
+        , shiftEarlier (Time offset) $ travelingBox HighlightA
+        ]
+    travelers = take (4 * travelerHalfCount + 1) $ do
+        i <- [0 ..]
+        shiftEarlier (Time $ 2 * i * offset) <$> travelerPair
+
+    travelerHalfCount = 6
+    offset = 1 / (2 * fromIntegral travelerHalfCount)
+
+    travelingBox color = followPath path origin <*> box color
+
+    sideSmall = 20
+    maxFactor = 15
+
+    startingPosition = Point (-225) 225
+    endingPosition = Point 225 (-225)
+
+    box color = scaling <*> (pure . translate v0 . D.draw color) (D.rectangle sideSmall sideSmall)
+    v0 = negateV $ Vector (0.5 * sideSmall) (0.5 * sideSmall)
+
+    path = piecewiseLinear . pathProgram duration $ startingPosition :| [endingPosition]
+    scaling = scale . mkScale <$> time
+
+    mkScale (Time t)
+        | t <= 0 = 1
+        | t <= 0.5 = interp (2 * t) 1 maxFactor
+        | t <= 1 = interp (2 * t - 1) maxFactor 1
+        | otherwise = 1
+
+interp :: Num a => a -> a -> a -> a
+interp u a b = (1 - u) * a + u * b
+
+duration :: Time
+duration = Time 1
