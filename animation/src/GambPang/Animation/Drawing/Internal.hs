@@ -23,6 +23,8 @@ module GambPang.Animation.Drawing.Internal (
 
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+import Data.Maybe (fromMaybe)
+import Data.Set (Set)
 import qualified Data.Set as Set
 
 import GambPang.Animation.Bitmap (BoundingBox (..), boundingBoxPixels, pixelPoint)
@@ -45,6 +47,10 @@ import GambPang.Animation.LinearAlgebra (
  )
 import GambPang.Animation.Rigging (Rigged (..))
 
+{- | 'Mask' and 'Exclude' combine by accumulating a total masked area and a
+ total excluded area.  Points are visible if and only if they lie within the mask
+ and outside of the exclude.
+-}
 data Drawing color
     = DrawShape color !Shape
     | -- | Earlier items overlap later items
@@ -149,24 +155,43 @@ transformEllipse t es = EllipseSpec a' b' c' d'
     d' = c * affine12 t' + d * affine22 t'
     t' = invertAffine t
 
-renderDrawing :: Drawing color -> Map (Int, Int) color
-renderDrawing = \case
-    DrawShape c s -> Map.fromList $ (,c) <$> renderShape s
-    Union ds -> Map.unions $ renderDrawing <$> ds
-    Mask m d -> Map.filterWithKey applyMask $ renderDrawing d
-      where
-        maskPixels = Set.fromList $ renderShape m
-        applyMask p _ = p `Set.member` maskPixels
-    Exclude m d -> Map.filterWithKey excludeRegion $ renderDrawing d
-      where
-        excludePixels = Set.fromList $ renderShape m
-        excludeRegion p _ = not $ p `Set.member` excludePixels
+data PixelMask = PixelMask
+    { includePixels :: Maybe (Set (Int, Int))
+    , excludePixels :: Set (Int, Int)
+    }
+    deriving (Eq, Show)
 
-renderShape :: Shape -> [(Int, Int)]
-renderShape = \case
-    Ellipse p es -> objectPixels (ellipseBoundingBox p es) (ellipsePointTest p es)
-    Parallelogram p v1 v2 -> polygonPixels $ parallelogramVertices p v1 v2
-    Polygon ps -> polygonPixels ps
+emptyPixelMask :: PixelMask
+emptyPixelMask = PixelMask{includePixels = Nothing, excludePixels = mempty}
+
+moreMask :: [(Int, Int)] -> PixelMask -> PixelMask
+moreMask ms m = m{includePixels = Just $ prevMask <> Set.fromList ms}
+  where
+    prevMask = fromMaybe mempty $ includePixels m
+
+testInclude :: (Int, Int) -> PixelMask -> Bool
+testInclude px = maybe True (Set.member px) . includePixels
+
+moreExclude :: [(Int, Int)] -> PixelMask -> PixelMask
+moreExclude ms m = m{excludePixels = excludePixels m <> Set.fromList ms}
+
+renderDrawing :: Drawing color -> Map (Int, Int) color
+renderDrawing = renderDrawingWithMask emptyPixelMask
+
+renderDrawingWithMask :: PixelMask -> Drawing color -> Map (Int, Int) color
+renderDrawingWithMask pMask = \case
+    DrawShape c s -> Map.fromList $ (,c) <$> renderShape pMask s
+    Union ds -> Map.unions $ renderDrawingWithMask pMask <$> ds
+    Mask m d -> renderDrawingWithMask (moreMask (pureShape m) pMask) d
+    Exclude m d -> renderDrawingWithMask (moreExclude (pureShape m) pMask) d
+  where
+    pureShape = renderShape emptyPixelMask
+
+renderShape :: PixelMask -> Shape -> [(Int, Int)]
+renderShape pMask = \case
+    Ellipse p es -> objectPixels pMask (ellipseBoundingBox p es) (ellipsePointTest p es)
+    Parallelogram p v1 v2 -> polygonPixels pMask $ parallelogramVertices p v1 v2
+    Polygon ps -> polygonPixels pMask ps
 
 ellipsePointTest :: Point -> EllipseSpec -> Point -> Bool
 ellipsePointTest p (EllipseSpec a b c d) q = l1 dx dy ^ (2 :: Int) + l2 dx dy ^ (2 :: Int) <= 1
@@ -211,8 +236,8 @@ parallelogramVertices p v1@(Vector x1 y1) v2@(Vector x2 y2)
     | otherwise =
         [p, displace p v2, displace p (v1 <> v2), displace p v1]
 
-polygonPixels :: [Point] -> [(Int, Int)]
-polygonPixels ps = objectPixels (polygonBoundingBox ps) (polygonPointTest ps)
+polygonPixels :: PixelMask -> [Point] -> [(Int, Int)]
+polygonPixels pMask ps = objectPixels pMask (polygonBoundingBox ps) (polygonPointTest ps)
 
 polygonPointTest :: [Point] -> Point -> Bool
 polygonPointTest [] _ = error "polygonPointTest: not enough points"
@@ -237,5 +262,10 @@ polygonBoundingBox ps =
     xMax = ceiling $ maximum xs
     yMax = ceiling $ maximum ys
 
-objectPixels :: BoundingBox -> (Point -> Bool) -> [(Int, Int)]
-objectPixels bb test = filter (test . uncurry pixelPoint) $ boundingBoxPixels bb
+objectPixels :: PixelMask -> BoundingBox -> (Point -> Bool) -> [(Int, Int)]
+objectPixels pMask bb test = filter testWithMask $ boundingBoxPixels bb
+  where
+    testWithMask px =
+        px `testInclude` pMask
+            && px `Set.notMember` excludePixels pMask
+            && (test . uncurry pixelPoint) px
