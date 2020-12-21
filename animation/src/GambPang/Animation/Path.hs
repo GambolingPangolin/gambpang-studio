@@ -55,6 +55,7 @@ piecewiseLinear :: PiecewiseLinearPath -> Path
 piecewiseLinear plp = Animated $ thePath plan
   where
     thePath (lps : lpss) t@(Time t')
+        | 0 >= t' = startPoint lps
         | t' <= endTime lps =
             interpolate (startPoint lps) (endPoint lps) $ (t' - startTime lps) / duration lps
         | otherwise = thePath lpss t
