@@ -7,21 +7,27 @@ module GambPang.Animation.Symmetry (
 
 import Control.Monad (zipWithM)
 import Data.List (inits, tails, uncons)
+import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (mapMaybe)
 import Data.Text (Text)
 import GambPang.Animation (
     Animated,
+    Drawing,
     Point (Point),
     Rigged (..),
     Time (..),
     compress,
     displacement,
+    followPath,
     origin,
+    pathProgram,
+    piecewiseLinear,
+    pointToVector,
     rotate,
     scale,
-    shift,
+    shiftLater,
     time,
     translate,
     valueAtTime,
@@ -82,7 +88,7 @@ regularTriangleSet n = zipWith toTriangle [1 ..] cwPairs
 getHandlePoint :: Int -> Int -> Point
 getHandlePoint n ix = Point x y
   where
-    a0 = toAngle n $ ix - 1
+    a0 = toAngle n $ ix + 1
     a1 = toAngle n ix
     x = (cos a0 + cos a1) / 2
     y = (sin a0 + sin a1) / 2
@@ -105,33 +111,38 @@ pentagon1 =
         { source = AnimatedDrawing . resize $ D.union <$> sequenceA [segments, pure underlayer]
         , viewFrame = originViewFrame
         , framesPerSec = 50
-        , frameCount = 60 * 50
+        , frameCount = 50 * 60
         , palette = nightlights
         }
   where
-    segments = animConcat $ animatePermutation 5 ts <$> permutations [1 .. 5]
+    segments = animConcat . take 5 $ animatePermutation 5 ts <$> permutations [1 .. 5]
     ts = regularTriangleSet 5
     underlayer = D.draw HighlightA $ regularPolygon 5
     resize = scale 120 120
 
-animatePermutation :: Int -> [TriangularSegment] -> [Int] -> Animated (D.Drawing ColorStyle)
-animatePermutation n ts ps = D.union . fmap drawTriangle <$> zipWithM (animateTriangle n) ts ps
-  where
-    drawTriangle = D.draw Foreground . triangle
+animatePermutation :: Int -> [TriangularSegment] -> [Int] -> Animated (Drawing ColorStyle)
+animatePermutation n ts ps = D.union <$> zipWithM (animateTriangle n) ts ps
 
-animateTriangle :: Int -> TriangularSegment -> Int -> Animated TriangularSegment
-animateTriangle n t nextPosition = animConcat [slide, reposition]
+animateTriangle :: Int -> TriangularSegment -> Int -> Animated (Drawing ColorStyle)
+animateTriangle n t nextPosition =
+    D.union <$> sequenceA [dot, drawTriangle <$> animConcat [slide, reposition]]
   where
-    slide = slideTriangleOut t 2
+    slide = slideTriangleOut t 0.25
     outPosition = valueAtTime (Time 1) slide
     reposition = rotateAndSlide n nextPosition outPosition
+    drawTriangle = D.draw Foreground . triangle
+
+    dot = followPath dotPath origin <*> pure (D.draw HighlightB $ D.disc origin 10)
+    dotPath =
+        piecewiseLinear . pathProgram (Time 1) $
+            handlePoint t :| [handlePoint outPosition, handlePoint t]
 
 -- | Move a triangle of the polygon
 slideTriangleOut :: TriangularSegment -> Double -> Animated TriangularSegment
 slideTriangleOut ts scalingFactor = getTranslation <$> time <*> pure ts
   where
     p = handlePoint ts
-    getTranslation (Time t) = translate $ displacement p (applyScale t p)
+    getTranslation (Time t) = translate . applyScale t $ pointToVector p
     applyScale t = scale (t * scalingFactor) (t * scalingFactor)
 
 -- | Move a triangle to its destination, while rotating it as appropriate
@@ -156,4 +167,4 @@ animConcat as = time >>= play . getSlot
     n = length as
     nd = fromIntegral n
     getSlot (Time t) = floor (nd * t) `mod` n
-    play ix = shift (Time $ fromIntegral ix / nd) . compress nd $ as !! ix
+    play ix = shiftLater (Time $ fromIntegral ix / nd) . compress nd $ as !! ix
