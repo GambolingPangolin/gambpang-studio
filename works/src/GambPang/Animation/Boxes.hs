@@ -13,6 +13,7 @@ import GambPang.Animation (
     Rigged (..),
     Time (..),
     Vector (..),
+    cameraPan,
     followPath,
     makeCircular,
     negateV,
@@ -20,6 +21,7 @@ import GambPang.Animation (
     origin,
     pathProgram,
     piecewiseLinear,
+    pointToVector,
     rotateO,
     scale,
     shiftEarlier,
@@ -29,7 +31,7 @@ import GambPang.Animation (
  )
 import qualified GambPang.Animation.Drawing as D
 
-import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs)
+import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs, ozarks)
 import GambPang.Animation.Piece (AnimatedPiece (..), applyPaletteChoice)
 import GambPang.Animation.Utils (defaultAnimatedPiece, originViewFrame, rotating, union2)
 
@@ -43,6 +45,7 @@ animations paletteChoice =
             , ("boxes-4", boxes4)
             , ("boxes-5", boxes5)
             , ("boxes-6", boxes6)
+            , ("boxes-7", boxes7)
             ]
 
 boxes1 :: AnimatedPiece
@@ -247,3 +250,36 @@ interp u a b = (1 - u) * a + u * b
 
 duration :: Time
 duration = Time 1
+
+-- | In which we scroll along a spinning-box field
+boxes7 :: AnimatedPiece
+boxes7 =
+    piece
+        { palette = ozarks
+        , framesPerSec = 35
+        , frameCount = 200
+        }
+  where
+    piece = defaultAnimatedPiece . cameraPan cameraPath $ D.union <$> spinners
+
+    spinners = cameraPath >>= traverse getSpinner . spinnerSet
+    spinnerSet (Point x y) = [(i, j) | i <- range x, j <- range y]
+
+    getSpinner (i, j) = getSpinnerCtor i j $ getSpinnerCenter i j
+    getSpinnerCtor i j
+        | i `mod` 5 == 0 && j `mod` 5 == 0 = spinner 3 HighlightA
+        | i `mod` 5 == 0 || j `mod` 5 == 0 = spinner 2 HighlightB
+        | otherwise = spinner 1 Foreground
+    getSpinnerCenter i j = Point (30 * fromIntegral i) (30 * fromIntegral j)
+
+    -- 500 / 30
+    n = 16 :: Int
+    range z = let i0 = floor (z / 30) in [i0 - 1 .. i0 + n + 1]
+
+    spinner r c p = translate (pointToVector p) $ rotating r <*> pure (box c)
+    box c = translate v . D.draw c $ D.rectangle 15 15
+    v = negateV $ Vector (15 / 2) (15 / 2)
+
+    cameraPath =
+        piecewiseLinear . pathProgram duration $
+            origin :| [Point (10 * 30) (5 * 30)]

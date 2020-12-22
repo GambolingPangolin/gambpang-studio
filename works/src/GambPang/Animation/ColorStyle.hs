@@ -13,6 +13,7 @@ module GambPang.Animation.ColorStyle (
     cubs,
     mellow,
     nightlights,
+    ozarks,
     redandblack,
     snowy,
     sunrise,
@@ -51,6 +52,7 @@ palettes =
         [ ("cubs", cubs)
         , ("mellow", mellow)
         , ("nightlights", nightlights)
+        , ("ozarks", ozarks)
         , ("redandblack", redandblack)
         , ("snowy", snowy)
         , ("sunrise", sunrise)
@@ -78,6 +80,13 @@ nightlights = \case
     Foreground -> Names.blue
     HighlightA -> Names.yellow
     HighlightB -> Names.white
+
+ozarks :: Palette
+ozarks = \case
+    Background -> sRGB24read "#303a21"
+    Foreground -> sRGB24read "#bcbdb9"
+    HighlightA -> sRGB24read "#9aa15b"
+    HighlightB -> sRGB24read "#bcd1e7"
 
 redandblack :: Palette
 redandblack = \case
