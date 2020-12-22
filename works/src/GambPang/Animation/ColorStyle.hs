@@ -17,6 +17,7 @@ module GambPang.Animation.ColorStyle (
     snowy,
     sunrise,
     verdant,
+    vegetablegarden,
 ) where
 
 import Control.Exception (Exception)
@@ -53,6 +54,7 @@ palettes =
         , ("redandblack", redandblack)
         , ("snowy", snowy)
         , ("sunrise", sunrise)
+        , ("vegetablegarden", vegetablegarden)
         , ("verdant", verdant)
         ]
 
@@ -97,6 +99,13 @@ sunrise = \case
     Foreground -> sRGB24read "#fe8a52"
     HighlightA -> sRGB24read "#fdd981"
     HighlightB -> sRGB24read "#fefcdf"
+
+vegetablegarden :: Palette
+vegetablegarden = \case
+    Background -> Names.darkgreen
+    Foreground -> Names.red
+    HighlightA -> Names.orange
+    HighlightB -> Names.yellow
 
 verdant :: Palette
 verdant = \case
