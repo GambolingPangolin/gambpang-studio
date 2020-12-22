@@ -6,6 +6,7 @@ module GambPang.Animation.Bars (
     bars2,
     bars3,
     bars4,
+    bars5,
 ) where
 
 import Data.Map (Map)
@@ -17,8 +18,10 @@ import GambPang.Animation (
     Point (..),
     Time (..),
     Vector (Vector),
+    backwards,
     circularPath,
     followPath,
+    makeCircular,
     negateV,
     origin,
     reflect,
@@ -32,7 +35,7 @@ import GambPang.Animation (
  )
 import qualified GambPang.Animation.Drawing as D
 
-import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, vegetablegarden)
+import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, snowy, vegetablegarden)
 import GambPang.Animation.Piece (AnimatedPiece (palette, viewFrame), applyPaletteChoice)
 import GambPang.Animation.Utils (defaultAnimatedPiece, originViewFrame)
 
@@ -44,6 +47,7 @@ animations paletteChoice =
             , ("bars-2", bars2)
             , ("bars-3", bars3)
             , ("bars-4", bars4)
+            , ("bars-5", bars5)
             ]
 
 bars1 :: AnimatedPiece
@@ -124,12 +128,15 @@ stripes numStripes totalSize = D.union $ mkStripe <$> [0 .. n - 1]
     h = totalSize / (2 * n)
     n = fromIntegral numStripes
 
--- | In which stripes fall into the center
+-- | In which we exit a canyon
 bars4 :: AnimatedPiece
 bars4 = piece{palette = vegetablegarden, viewFrame = originViewFrame}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA [leftSide, rightSide]
+    piece = defaultAnimatedPiece canyonExit
 
+canyonExit :: Animated (Drawing ColorStyle)
+canyonExit = makeCircular (Time 1) $ D.union <$> sequenceA [leftSide, rightSide]
+  where
     leftSide = animateScale <*> (pure . scaleXY (16 * 500) 500 . D.union) boxes
     rightSide = reflect (Vector 1 0) origin leftSide
 
@@ -145,3 +152,9 @@ bars4 = piece{palette = vegetablegarden, viewFrame = originViewFrame}
 
 power :: Floating a => a -> a -> a
 power b e = exp $ e * log b
+
+-- | In which we go into a canyon
+bars5 :: AnimatedPiece
+bars5 = piece{palette = snowy, viewFrame = originViewFrame}
+  where
+    piece = defaultAnimatedPiece $ backwards canyonExit

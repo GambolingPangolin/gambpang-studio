@@ -37,6 +37,7 @@ module GambPang.Animation (
     Motion,
     time,
     timeControl,
+    backwards,
     expand,
     compress,
     shiftEarlier,
