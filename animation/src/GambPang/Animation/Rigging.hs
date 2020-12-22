@@ -85,4 +85,4 @@ followPath p p0 = translate . displacement p0 <$> p
 cameraPan :: Rigged a => Path -> Animated a -> Animated a
 cameraPan path scene = translate <$> pathV <*> scene
   where
-    pathV = pointToVector <$> path
+    pathV = negateV . pointToVector <$> path
