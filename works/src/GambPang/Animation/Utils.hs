@@ -8,6 +8,8 @@ module GambPang.Animation.Utils (
     defaultViewFrame,
     originViewFrame,
     defaultAnimatedPiece,
+    Pointed (..),
+    makeGrid,
 ) where
 
 import Data.ByteString (ByteString)
@@ -18,10 +20,12 @@ import qualified Data.Text as Text
 import GambPang.Animation (
     Animated,
     Drawing,
-    Rigged,
+    Point (..),
+    Rigged (..),
     Time (Time),
     Vector,
     ViewFrame (..),
+    displacement,
     rotateO,
     time,
     translate,
@@ -75,3 +79,61 @@ defaultAnimatedPiece anim =
         , framesPerSec = 50
         , palette = mellow
         }
+
+data Pointed a = Pointed
+    { basePoint :: Point
+    , object :: a
+    }
+
+instance Functor Pointed where
+    fmap f p = p{object = f $ object p}
+
+instance Foldable Pointed where
+    foldMap f = f . object
+
+instance Traversable Pointed where
+    traverse f (Pointed p obj) = Pointed p <$> f obj
+
+instance Rigged a => Rigged (Pointed a) where
+    transform t (Pointed p obj) = Pointed (transform t p) (transform t obj)
+
+makeGrid ::
+    Rigged b =>
+    Point ->
+    Point ->
+    Int ->
+    Int ->
+    (Int -> Int -> Pointed b) ->
+    [b]
+makeGrid ll ur n m mkObject
+    | n >= 2 && m >= 2 = mkObjectInPosition ll ur n m mkObject <$> gridPoints
+    | otherwise = error "makeGrid"
+  where
+    gridPoints = [(i, j) | i <- [1 .. n], j <- [1 .. m]]
+
+mkObjectInPosition ::
+    Rigged a =>
+    Point ->
+    Point ->
+    Int ->
+    Int ->
+    (Int -> Int -> Pointed a) ->
+    (Int, Int) ->
+    a
+mkObjectInPosition ll ur n m mkObject (i, j) = translate v $ object ptd
+  where
+    ptd = mkObject i j
+    v = displacement (basePoint ptd) $ mkLocation ll ur n m i j
+
+mkLocation :: Point -> Point -> Int -> Int -> Int -> Int -> Point
+mkLocation ll ur n m i j =
+    Point
+        { pointX = llx + (fromIntegral i - 1) * hSep
+        , pointY = lly + (fromIntegral j - 1) * vSep
+        }
+  where
+    Point llx lly = ll
+    Point urx ury = ur
+
+    hSep = (urx - llx) / (fromIntegral n - 1)
+    vSep = (ury - lly) / (fromIntegral m - 1)

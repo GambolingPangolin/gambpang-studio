@@ -27,6 +27,7 @@ import qualified GambPang.Animation.Dots as Dots
 import GambPang.Animation.Piece (AnimatedPiece, renderGif)
 import qualified GambPang.Animation.Scrollers as Scr
 import qualified GambPang.Animation.Snowflake as Snowflake
+import qualified GambPang.Animation.Spinfield as Spinfield
 import qualified GambPang.Animation.Symmetry as Symmetry
 import GambPang.Animation.Vignette (Vignette, VignetteDescription, fromDescription)
 import qualified GambPang.Animation.Vignette as V
@@ -138,5 +139,6 @@ mkAnimations paletteChoice =
         , Scr.animations
         , Boxes.animations
         , Snowflake.animations
+        , Spinfield.animations
         , Symmetry.animations
         ]
