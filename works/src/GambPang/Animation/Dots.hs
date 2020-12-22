@@ -6,6 +6,7 @@ module GambPang.Animation.Dots (
     dots1,
     dots2,
     dots3,
+    dots6,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -18,10 +19,12 @@ import GambPang.Animation (
     Point (..),
     Time (..),
     Vector (..),
+    circularPath,
     followPath,
     origin,
     pathProgram,
     piecewiseLinear,
+    pointToVector,
     rotateO,
     shiftEarlier,
     time,
@@ -40,7 +43,7 @@ import GambPang.Animation.Piece (
     AnimationSource (AnimatedDrawing),
     applyPaletteChoice,
  )
-import GambPang.Animation.Utils (defaultAnimatedPiece, defaultViewFrame, originViewFrame, rotating)
+import GambPang.Animation.Utils (defaultAnimatedPiece, defaultViewFrame, makeGrid, originViewFrame, rotating)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -51,6 +54,7 @@ animations paletteChoice =
             , ("dots-3", dots3)
             , ("dots-4", dots4)
             , ("dots-5", dots5)
+            , ("dots-6", dots6)
             ]
 
 dots1 :: AnimatedPiece
@@ -190,3 +194,29 @@ toroidalProjection r1 r2 (a1, a2) = Point x y
     y = r * sin a1
     r = r1 + (r2 - r1) * u
     u = (1 + cos a2) / 2
+
+-- In which dots move under a grating
+dots6 :: AnimatedPiece
+dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> sequenceA [thisGrating <$> hamster, pure dotMatrix]
+
+    dotMatrix = D.union $ makeGrid ll ur 7 7 topDot
+
+    thisGrating = grating ll ur 7 7 20
+    hamster = followPath (circularPath (Time 1) origin 150) origin <*> pure dot
+
+    dot = D.draw Foreground $ D.disc origin 80
+    topDot i j p = D.draw (getColor i j) $ D.disc p 10
+    getColor i j
+        | even (i + j) = HighlightA
+        | otherwise = HighlightB
+
+    ll = Point (-200) (-200)
+    ur = Point 200 200
+
+grating :: Point -> Point -> Int -> Int -> Double -> Drawing color -> Drawing color
+grating ll ur n m r a = D.union $ makeGrid ll ur n m applyMask
+  where
+    applyMask _ _ p = D.mask (makeMask p) a
+    makeMask p = translate (pointToVector p) $ D.disc origin r
