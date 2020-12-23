@@ -4,29 +4,26 @@
 
 module GambPang.Animation.Vignette (
     Vignette (..),
-    VignetteDescription,
     vignette,
     vignetteId,
-    fromDescription,
+    vignetteAnimFilePath,
+    lightFontUrl,
+    heavyFontUrl,
 ) where
 
 import Clay (Color, Css, FontFaceSrc (..), (?))
 import qualified Clay as C
 import Clay.Stylesheet (StyleM)
-import Control.Monad.Trans.Class (MonadTrans (lift))
 import Crypto.Hash (SHA256 (..), hashWith)
 import Data.Aeson (FromJSON (..), withObject, (.:))
 import Data.ByteArray (convert)
 import qualified Data.ByteString.Base16 as B16
-import qualified Data.ByteString.Lazy as BSL
 import Data.Char (isAlphaNum)
 import Data.Colour (Colour)
 import Data.Colour.SRGB (
     RGB (..),
     toSRGB24,
  )
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Text.Encoding (decodeUtf8, encodeUtf8)
@@ -36,10 +33,6 @@ import qualified Lucid as L
 import Lucid.Base (Html, commuteHtmlT, toHtml)
 
 import GambPang.Animation.ColorStyle (ColorStyle (..), Palette)
-import GambPang.Animation.Piece (AnimatedPiece, renderGif)
-import qualified GambPang.Animation.Piece as P
-import GambPang.Animation.Utils (dataUrl)
-import GambPang.Files (heavyFontContent, lightFontContent)
 
 -- TODO Fix font loading/styling
 style :: (ColorStyle -> Color) -> Css
@@ -83,54 +76,29 @@ colorUnderline ulColor = do
     C.textDecoration C.none
     C.borderBottom C.solid (C.px 3) ulColor
 
-data VignetteDescription = VignetteDescription
-    { vDescTitle :: Text
-    , vDescGreeting :: Text
-    , vDescMessage :: Text
-    , vDescAnimationName :: Text
-    , vDescPaletteName :: Text
+data Vignette = Vignette
+    { vignetteTitle :: Text
+    , vignetteGreeting :: Text
+    , vignetteMessage :: Text
+    , vignetteAnimationName :: Text
+    , vignettePaletteName :: Text
     }
 
-instance FromJSON VignetteDescription where
-    parseJSON = withObject "VignetteDescription" $ \obj ->
-        VignetteDescription
+instance FromJSON Vignette where
+    parseJSON = withObject "Vignette" $ \obj ->
+        Vignette
             <$> obj .: "title"
             <*> obj .: "greeting"
             <*> obj .: "message"
             <*> obj .: "animation"
             <*> obj .: "palette"
 
-data Vignette = Vignette
-    { vignetteTitle :: Text
-    , vignetteGreeting :: Text
-    , vignetteMessage :: Text
-    , vignetteAnimation :: AnimatedPiece
-    , vignettePalette :: Palette
-    }
+vignetteAnimFilePath :: Vignette -> Text
+vignetteAnimFilePath v =
+    "images/" <> vignetteAnimationName v <> "-" <> vignettePaletteName v <> ".gif"
 
-fromDescription ::
-    Map Text Palette ->
-    Map Text AnimatedPiece ->
-    VignetteDescription ->
-    Either Text Vignette
-fromDescription palettes animations desc =
-    mkVignette
-        <$> lookupDetail "palette" (vDescPaletteName desc) palettes
-        <*> lookupDetail "animation" (vDescAnimationName desc) animations
-  where
-    mkVignette p a =
-        Vignette
-            { vignetteTitle = vDescTitle desc
-            , vignetteGreeting = vDescGreeting desc
-            , vignetteMessage = vDescMessage desc
-            , vignetteAnimation = a
-            , vignettePalette = p
-            }
-    lookupDetail collection key = maybe (onLookupFail collection key) pure . Map.lookup key
-    onLookupFail collection key = Left $ "Unable to find" <> collection <> ": " <> key
-
-vignette :: Vignette -> Either Text (Html ())
-vignette v = commuteHtmlT . L.html_ $ do
+vignette :: Palette -> Vignette -> Either Text (Html ())
+vignette palette v = commuteHtmlT . L.html_ $ do
     L.head_ $ do
         L.title_ . toHtml $ vignetteTitle v
         L.style_
@@ -143,11 +111,7 @@ vignette v = commuteHtmlT . L.html_ $ do
         heading . toHtml $ vignetteGreeting v
         L.p_ [L.class_ "content"] . toHtml $ vignetteMessage v
         subheading . toHtml $ vignetteTitle v
-        animationBytes <- lift $ BSL.toStrict <$> renderGif animation
-        L.div_ [L.class_ "animation content"] $ L.img_ [L.src_ $ dataUrl "image/gif" animationBytes]
-  where
-    palette = vignettePalette v
-    animation = (vignetteAnimation v){P.palette = palette}
+        L.div_ [L.class_ "animation content"] $ L.img_ [L.src_ $ vignetteAnimFilePath v]
 
 heading :: Applicative m => HtmlT m a -> HtmlT m a
 heading = L.h1_ . u_
@@ -162,7 +126,8 @@ toCssPalette :: (a -> Colour Double) -> a -> Color
 toCssPalette = (toCssColor .)
 
 toCssColor :: Colour Double -> Color
-toCssColor = (C.rgba <$> fI channelRed <*> fI channelGreen <*> fI channelBlue <*> pure 1) . toSRGB24
+toCssColor =
+    (C.rgba <$> fI channelRed <*> fI channelGreen <*> fI channelBlue <*> pure 1) . toSRGB24
   where
     fI = (fromIntegral .)
 
@@ -186,13 +151,13 @@ sha256Text n =
         . encodeUtf8
 
 lightFontUrl :: Text
-lightFontUrl = dataUrl "font/ttf" lightFontContent
+lightFontUrl = "fonts/Amiri-Regular.ttf"
 
 lightFont :: Text
 lightFont = "light-font"
 
 heavyFontUrl :: Text
-heavyFontUrl = dataUrl "font/ttf" heavyFontContent
+heavyFontUrl = "fonts/AbrilFatface-Regular.ttf"
 
 heavyFont :: Text
 heavyFont = "heavy-font"
