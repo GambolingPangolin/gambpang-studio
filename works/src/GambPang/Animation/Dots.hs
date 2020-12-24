@@ -6,8 +6,12 @@ module GambPang.Animation.Dots (
     dots1,
     dots2,
     dots3,
+    dots4,
+    dots5,
     dots6,
     dots7,
+    dots8,
+    dots9,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -41,6 +45,7 @@ import GambPang.Animation.ColorStyle (
     PaletteChoice,
     france,
     snowy,
+    sunrise,
     terracotta,
  )
 import GambPang.Animation.Piece (
@@ -68,6 +73,7 @@ animations paletteChoice =
             , ("dots-6", dots6)
             , ("dots-7", dots7)
             , ("dots-8", dots8)
+            , ("dots-9", dots9)
             ]
 
 dots1 :: AnimatedPiece
@@ -269,20 +275,51 @@ displacementField a p (Time t) = Vector dx dy
 dots8 :: AnimatedPiece
 dots8 = piece{palette = france}
   where
-    piece = defaultAnimatedPiece $ D.union <$> traverse (uncurry mkRow) rowParams
-    rowParams = zip [1 .. rowCount] $ cycle [HighlightA, Foreground, HighlightB]
+    piece = defaultAnimatedPiece $ flowDots dotCount rowCount rowParams
+    rowParams = zipWith3 FlowRowParams colors [1 .. rowCount] $ fromIntegral <$> [1 .. rowCount]
+    colors = cycle [HighlightA, Foreground, HighlightB]
     dotCount = 12
     rowCount = 10
-    mkRow i c = D.union . dots c i <$> time
-    dots c i t = dot c i t <$> [-1 .. dotCount]
-    dot c i (Time t) j = D.draw c $ D.disc (getPosition i j t) 10
-    getPosition i j t = Point (getX i j t) (getY i)
 
-    getX i j t =
-        let f = floor $ i * t
-            offset = i * t - fromIntegral @Int f
+data FlowRowParams = FlowRowParams
+    { frpColor :: ColorStyle
+    , frpRowIndex :: Int
+    , frpRowSpeed :: Double
+    }
+    deriving (Eq, Show)
+
+flowDots :: Int -> Int -> [FlowRowParams] -> Animated (Drawing ColorStyle)
+flowDots dotCount rowCount = fmap D.union . traverse mkRow
+  where
+    mkRow frp = D.union . dots (frpColor frp) (frpRowIndex frp) (frpRowSpeed frp) <$> time
+    dots c i s t = dot c i s t <$> [-1 .. fromIntegral dotCount]
+    dot c i s (Time t) j = D.draw c $ D.disc (getPosition i j s t) 10
+    getPosition i j s t = Point (getX j s t) (getY i)
+
+    getX j s t =
+        let f = floor $ s * t
+            offset = s * t - fromIntegral @Int f
          in (j + offset) * colWidth
-    getY i = i * rowHeight
+    getY i = fromIntegral i * rowHeight
 
-    rowHeight = 500 / (rowCount + 1)
-    colWidth = 500 / dotCount
+    rowHeight = 500 / (fromIntegral rowCount + 1)
+    colWidth = 500 / fromIntegral dotCount
+
+-- | In which the flow is fast in the middle and slow on the outsides
+dots9 :: AnimatedPiece
+dots9 = piece{palette = sunrise}
+  where
+    piece = defaultAnimatedPiece $ flowDots dotCount rowCount rowParams
+    dotCount = 12
+    rowCount = 11
+    rowParams = zipWith3 FlowRowParams colors [1 .. rowCount] speeds
+    colors =
+        mconcat
+            [ replicate 3 Foreground
+            , replicate 2 HighlightA
+            , replicate 1 HighlightB
+            , replicate 2 HighlightA
+            , replicate 3 Foreground
+            ]
+
+    speeds = [1 .. 6] <> reverse [1 .. 5]
