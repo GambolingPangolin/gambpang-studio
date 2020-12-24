@@ -10,9 +10,11 @@ module GambPang.Animation.ColorStyle (
 
     -- * Palettes
     palettes,
+    calico,
     californiacoast,
     cubs,
     france,
+    lux,
     mellow,
     nightlights,
     ozarks,
@@ -52,9 +54,11 @@ parsePalette name = maybe unknown (pure . PaletteChoice) $ Map.lookup name palet
 palettes :: Map Text Palette
 palettes =
     Map.fromList
-        [ ("californiacoast", californiacoast)
+        [ ("calico", calico)
+        , ("californiacoast", californiacoast)
         , ("cubs", cubs)
         , ("france", france)
+        , ("lux", lux)
         , ("mellow", mellow)
         , ("nightlights", nightlights)
         , ("ozarks", ozarks)
@@ -65,6 +69,13 @@ palettes =
         , ("vegetablegarden", vegetablegarden)
         , ("verdant", verdant)
         ]
+
+calico :: Palette
+calico = \case
+    Background -> Names.white
+    Foreground -> Names.orange
+    HighlightA -> Names.silver
+    HighlightB -> Names.black
 
 californiacoast :: Palette
 californiacoast = \case
@@ -86,6 +97,13 @@ france = \case
     Foreground -> Names.white
     HighlightA -> Names.blue
     HighlightB -> Names.red
+
+lux :: Palette
+lux = \case
+    Background -> Names.navy
+    Foreground -> Names.gold
+    HighlightA -> Names.silver
+    HighlightB -> Names.white
 
 mellow :: Palette
 mellow = \case

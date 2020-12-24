@@ -13,6 +13,7 @@ module GambPang.Animation.Dots (
     dots8,
     dots9,
     dots10,
+    dots11,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -28,6 +29,8 @@ import GambPang.Animation (
     backwards,
     circularPath,
     followPath,
+    makeCircular,
+    negateV,
     norm,
     normalize,
     origin,
@@ -36,6 +39,7 @@ import GambPang.Animation (
     pointToVector,
     rotateO,
     shiftEarlier,
+    shiftLater,
     time,
     translate,
  )
@@ -47,6 +51,7 @@ import GambPang.Animation.ColorStyle (
     PaletteChoice,
     californiacoast,
     france,
+    lux,
     snowy,
     sunrise,
     terracotta,
@@ -78,6 +83,7 @@ animations paletteChoice =
             , ("dots-8", dots8)
             , ("dots-9", dots9)
             , ("dots-10", dots10)
+            , ("dots-11", dots11)
             ]
 
 dots1 :: AnimatedPiece
@@ -353,3 +359,35 @@ dots10 = piece{viewFrame = originViewFrame, palette = californiacoast}
         | otherwise = HighlightB
     getCount i = 2 * i + smallestCircleCount
     smallestCircleCount = 8
+
+-- | In which dots travel around square obstacles
+dots11 :: AnimatedPiece
+dots11 = piece{palette = lux, viewFrame = originViewFrame}
+  where
+    piece =
+        defaultAnimatedPiece $
+            D.union <$> sequenceA [pure innerFrame, animatedDots, pure outerFrame]
+
+    innerFrame = squareFrame 50 75 HighlightA
+    outerFrame = squareFrame 100 125 HighlightB
+
+    animatedDots = D.union <$> sequenceA [animatedDot, shiftLater (Time 0.2) animatedDot]
+
+    animatedDot = makeCircular (Time 1) $ followPath path origin <*> pure dot
+    dot = D.draw Foreground $ D.disc origin 15
+    path = getPath <$> time
+
+    getPath t =
+        let r = getR t
+            a = getA t
+         in Point (r * cos a) (r * sin a)
+    getR (Time t) = (* 225) . sin $ 2 * pi * t
+    getA (Time t)
+        | t <= 0.5 = 2 * pi * t
+        | otherwise = negate $ 2 * pi * (t - 1)
+
+squareFrame :: Double -> Double -> color -> Drawing color
+squareFrame s1 s2 c = D.exclude sq1 $ D.draw c sq2
+  where
+    sq1 = translate (negateV $ Vector s1 s1) $ D.rectangle (2 * s1) (2 * s1)
+    sq2 = translate (negateV $ Vector s2 s2) $ D.rectangle (2 * s2) (2 * s2)
