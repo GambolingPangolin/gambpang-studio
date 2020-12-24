@@ -10,6 +10,7 @@ module GambPang.Animation.ColorStyle (
 
     -- * Palettes
     palettes,
+    californiacoast,
     cubs,
     france,
     mellow,
@@ -51,7 +52,8 @@ parsePalette name = maybe unknown (pure . PaletteChoice) $ Map.lookup name palet
 palettes :: Map Text Palette
 palettes =
     Map.fromList
-        [ ("cubs", cubs)
+        [ ("californiacoast", californiacoast)
+        , ("cubs", cubs)
         , ("france", france)
         , ("mellow", mellow)
         , ("nightlights", nightlights)
@@ -63,6 +65,13 @@ palettes =
         , ("vegetablegarden", vegetablegarden)
         , ("verdant", verdant)
         ]
+
+californiacoast :: Palette
+californiacoast = \case
+    Background -> sRGB24read "#cb9967"
+    Foreground -> sRGB24read "#48675a"
+    HighlightA -> sRGB24read "#f0e4d3"
+    HighlightB -> sRGB24read "#d0ebfe"
 
 cubs :: Palette
 cubs = \case

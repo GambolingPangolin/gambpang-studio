@@ -12,6 +12,7 @@ module GambPang.Animation.Dots (
     dots7,
     dots8,
     dots9,
+    dots10,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -24,6 +25,7 @@ import GambPang.Animation (
     Point (..),
     Time (..),
     Vector (..),
+    backwards,
     circularPath,
     followPath,
     norm,
@@ -43,6 +45,7 @@ import qualified GambPang.Animation.Drawing as D
 import GambPang.Animation.ColorStyle (
     ColorStyle (..),
     PaletteChoice,
+    californiacoast,
     france,
     snowy,
     sunrise,
@@ -74,6 +77,7 @@ animations paletteChoice =
             , ("dots-7", dots7)
             , ("dots-8", dots8)
             , ("dots-9", dots9)
+            , ("dots-10", dots10)
             ]
 
 dots1 :: AnimatedPiece
@@ -323,3 +327,29 @@ dots9 = piece{palette = sunrise}
             ]
 
     speeds = [1 .. 6] <> reverse [1 .. 5]
+
+-- | In which dots move along concentric circles
+dots10 :: AnimatedPiece
+dots10 = piece{viewFrame = originViewFrame, palette = californiacoast}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> traverse mkRing [0 .. 10 :: Int]
+    mkRing i
+        | even i = ring i
+        | otherwise = backwards $ ring i
+
+    dots i = D.union $ dot (getColor i) . getPoint (getR i) <$> getAngles i
+    dot c p = D.draw c $ D.disc p 10
+    ring i = rotating (getRate i) <*> pure (dots i)
+
+    getRate i = 1 / fromIntegral (getCount i)
+    getAngles i =
+        let n = getCount i
+         in (2 * pi *) . (/ fromIntegral n) . fromIntegral <$> [1 .. n]
+    getR i = 30 * fromIntegral i + 50
+    getPoint r a = Point (r * cos a) (r * sin a)
+    getColor i
+        | i `mod` 3 == 0 = Foreground
+        | i `mod` 3 == 1 = HighlightA
+        | otherwise = HighlightB
+    getCount i = 2 * i + smallestCircleCount
+    smallestCircleCount = 8
