@@ -19,6 +19,7 @@ module GambPang.Animation.ColorStyle (
     sunrise,
     verdant,
     vegetablegarden,
+    terracotta,
 ) where
 
 import Control.Exception (Exception)
@@ -56,6 +57,7 @@ palettes =
         , ("redandblack", redandblack)
         , ("snowy", snowy)
         , ("sunrise", sunrise)
+        , ("terracotta", terracotta)
         , ("vegetablegarden", vegetablegarden)
         , ("verdant", verdant)
         ]
@@ -108,6 +110,13 @@ sunrise = \case
     Foreground -> sRGB24read "#fe8a52"
     HighlightA -> sRGB24read "#fdd981"
     HighlightB -> sRGB24read "#fefcdf"
+
+terracotta :: Palette
+terracotta = \case
+    Background -> sRGB24read "#7c3a20"
+    Foreground -> sRGB24read "#59291b"
+    HighlightA -> sRGB24read "#c57252"
+    HighlightB -> sRGB24read "#e58666"
 
 vegetablegarden :: Palette
 vegetablegarden = \case

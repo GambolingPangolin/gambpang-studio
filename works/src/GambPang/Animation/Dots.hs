@@ -7,6 +7,7 @@ module GambPang.Animation.Dots (
     dots2,
     dots3,
     dots6,
+    dots7,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -21,6 +22,8 @@ import GambPang.Animation (
     Vector (..),
     circularPath,
     followPath,
+    norm,
+    normalize,
     origin,
     pathProgram,
     piecewiseLinear,
@@ -37,13 +40,20 @@ import GambPang.Animation.ColorStyle (
     ColorStyle (..),
     PaletteChoice,
     snowy,
+    terracotta,
  )
 import GambPang.Animation.Piece (
     AnimatedPiece (..),
     AnimationSource (AnimatedDrawing),
     applyPaletteChoice,
  )
-import GambPang.Animation.Utils (defaultAnimatedPiece, defaultViewFrame, makeGrid, originViewFrame, rotating)
+import GambPang.Animation.Utils (
+    defaultAnimatedPiece,
+    defaultViewFrame,
+    makeGrid,
+    originViewFrame,
+    rotating,
+ )
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -55,6 +65,7 @@ animations paletteChoice =
             , ("dots-4", dots4)
             , ("dots-5", dots5)
             , ("dots-6", dots6)
+            , ("dots-7", dots7)
             ]
 
 dots1 :: AnimatedPiece
@@ -187,7 +198,13 @@ toroidalPath r1 r2 n m = Animated $ \(Time t) -> toroidalProjection r1 r2 (a1 t,
     a1 = (2 * pi * m *)
     a2 = (2 * pi * n *)
 
-toroidalProjection :: Double -> Double -> (Double, Double) -> Point
+toroidalProjection ::
+    -- | Inner radius
+    Double ->
+    -- | Outer radius
+    Double ->
+    (Double, Double) ->
+    Point
 toroidalProjection r1 r2 (a1, a2) = Point x y
   where
     x = r * cos a1
@@ -220,3 +237,28 @@ grating ll ur n m r a = D.union $ makeGrid ll ur n m applyMask
   where
     applyMask _ _ p = D.mask (makeMask p) a
     makeMask p = translate (pointToVector p) $ D.disc origin r
+
+-- | In which dots are displaced by an ocillating field
+dots7 :: AnimatedPiece
+dots7 = piece{viewFrame = originViewFrame, palette = terracotta}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+    dot c p = D.draw c $ D.disc p 5
+    wobblingDot c p = translate <$> (displacementField 7.5 p <$> time) <*> pure (dot c p)
+    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
+    ll = Point (-200) (-200)
+    ur = Point 200 200
+
+    getColor i j
+        | i + j `mod` 3 == 0 = Foreground
+        | i + j `mod` 3 == 1 = HighlightA
+        | otherwise = HighlightB
+
+displacementField :: Double -> Point -> Time -> Vector
+displacementField a p (Time t) = Vector dx dy
+  where
+    v = pointToVector p
+    u = normalize v
+    s = (a *) . sin . (2 * pi *) $ norm v / 250 + t
+    dx = s * displacementX u
+    dy = s * displacementY u
