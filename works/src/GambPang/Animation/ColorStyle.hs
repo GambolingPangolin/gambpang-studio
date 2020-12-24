@@ -11,6 +11,7 @@ module GambPang.Animation.ColorStyle (
     -- * Palettes
     palettes,
     cubs,
+    france,
     mellow,
     nightlights,
     ozarks,
@@ -51,6 +52,7 @@ palettes :: Map Text Palette
 palettes =
     Map.fromList
         [ ("cubs", cubs)
+        , ("france", france)
         , ("mellow", mellow)
         , ("nightlights", nightlights)
         , ("ozarks", ozarks)
@@ -68,6 +70,13 @@ cubs = \case
     Foreground -> Names.red
     HighlightA -> Names.grey
     HighlightB -> Names.white
+
+france :: Palette
+france = \case
+    Background -> Names.black
+    Foreground -> Names.white
+    HighlightA -> Names.blue
+    HighlightB -> Names.red
 
 mellow :: Palette
 mellow = \case

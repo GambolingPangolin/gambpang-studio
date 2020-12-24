@@ -39,6 +39,7 @@ import qualified GambPang.Animation.Drawing as D
 import GambPang.Animation.ColorStyle (
     ColorStyle (..),
     PaletteChoice,
+    france,
     snowy,
     terracotta,
  )
@@ -66,6 +67,7 @@ animations paletteChoice =
             , ("dots-5", dots5)
             , ("dots-6", dots6)
             , ("dots-7", dots7)
+            , ("dots-8", dots8)
             ]
 
 dots1 :: AnimatedPiece
@@ -262,3 +264,25 @@ displacementField a p (Time t) = Vector dx dy
     s = (a *) . sin . (2 * pi *) $ norm v / 250 + t
     dx = s * displacementX u
     dy = s * displacementY u
+
+-- | In which dots at the top scroll by faster than dots on the bottom
+dots8 :: AnimatedPiece
+dots8 = piece{palette = france}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> traverse (uncurry mkRow) rowParams
+    rowParams = zip [1 .. rowCount] $ cycle [HighlightA, Foreground, HighlightB]
+    dotCount = 12
+    rowCount = 10
+    mkRow i c = D.union . dots c i <$> time
+    dots c i t = dot c i t <$> [-1 .. dotCount]
+    dot c i (Time t) j = D.draw c $ D.disc (getPosition i j t) 10
+    getPosition i j t = Point (getX i j t) (getY i)
+
+    getX i j t =
+        let f = floor $ i * t
+            offset = i * t - fromIntegral @Int f
+         in (j + offset) * colWidth
+    getY i = i * rowHeight
+
+    rowHeight = 500 / (rowCount + 1)
+    colWidth = 500 / dotCount
