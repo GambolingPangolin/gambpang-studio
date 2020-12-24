@@ -2,6 +2,7 @@ module GambPang.Animation.Render (
     exportGif,
     renderAnimField2D,
     renderAnimDrawing,
+    sampleDrawings,
 ) where
 
 import Codec.Picture (
@@ -89,9 +90,17 @@ renderAnimDrawing n vf bg getColor (Animated a) = runST $ do
     img <- thawImage initialImage
     animationFrames <$> foldM (calcImage vf bg img) initialADState drawings
   where
-    drawings = (mapColor getColor . a <$> timeSamples vf n) `using` parList rpar
     initialImage =
         generateImage (\_ _ -> colorPixel bg 0xFF) (viewFrameWidth vf) (viewFrameHeight vf)
+    drawings = sampleDrawings n vf getColor a
+
+sampleDrawings ::
+    Int ->
+    ViewFrame ->
+    (color1 -> color2) ->
+    (Time -> Drawing color1) ->
+    [Drawing color2]
+sampleDrawings n vf getColor a = (mapColor getColor . a <$> timeSamples vf n) `using` parList rpar
 
 calcImage ::
     ViewFrame ->

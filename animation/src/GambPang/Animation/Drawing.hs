@@ -11,6 +11,9 @@ module GambPang.Animation.Drawing (
     ellipse,
     rectangle,
     polygon,
+
+    -- * Rendering
+    renderDrawing,
 ) where
 
 import GambPang.Animation.Drawing.Internal
