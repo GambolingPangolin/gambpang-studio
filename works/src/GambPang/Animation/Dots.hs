@@ -15,6 +15,7 @@ module GambPang.Animation.Dots (
     dots10,
     dots11,
     dots12,
+    dots13,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -91,6 +92,7 @@ animations paletteChoice =
             , ("dots-10", dots10)
             , ("dots-11", dots11)
             , ("dots-12", dots12)
+            , ("dots-13", dots13)
             ]
 
 dots1 :: AnimatedPiece
@@ -426,3 +428,32 @@ dots12 = piece{viewFrame = originViewFrame, palette = calico}
          in Vector dx dy
     a = 1 / 100
     d = 10
+
+-- | In which dots interleave among some rectangles
+dots13 :: AnimatedPiece
+dots13 = piece{viewFrame = originViewFrame, frameCount = 200}
+  where
+    piece = defaultAnimatedPiece $ layers <$> time <*> dot
+
+    dot = followPath path origin <*> pure staticDot
+    staticDot = D.draw Foreground $ D.disc origin 15
+    path = toroidalPath rInnerPath rOuterPath verticalWindingNumber 1
+
+    rInnerPath = 75
+    rOuterPath = 200
+    verticalWindingNumber = 5
+
+    layers (Time t) d
+        | isAbove t = D.union [frames, d]
+        | otherwise = D.union [d, frames]
+
+    isAbove t = even @Int . floor $ 8 * t
+
+    frames = D.union [frameA, frameB, frameC, frameD]
+
+    frameA = translate (Vector 125 125) $ frame HighlightA
+    frameB = translate (Vector (-125) 125) $ frame HighlightB
+    frameC = translate (Vector 125 (-125)) $ frame HighlightB
+    frameD = translate (Vector (-125) (-125)) $ frame HighlightA
+
+    frame c = squareFrame 80 100 c
