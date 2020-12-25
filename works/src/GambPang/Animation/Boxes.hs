@@ -12,6 +12,7 @@ module GambPang.Animation.Boxes (
     boxes8,
     boxes9,
     boxes10,
+    boxes11,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -49,7 +50,16 @@ import Control.Arrow (Arrow ((***)))
 import Data.List (partition)
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs, ozarks)
 import GambPang.Animation.Piece (AnimatedPiece (..), applyPaletteChoice)
-import GambPang.Animation.Utils (defaultAnimatedPiece, grating, makeGrid, originViewFrame, rotating, translationField, union2)
+import GambPang.Animation.Utils (
+    defaultAnimatedPiece,
+    grating,
+    makeGrid,
+    originViewFrame,
+    rotating,
+    scaleField,
+    translationField,
+    union2,
+ )
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -65,6 +75,7 @@ animations paletteChoice =
             , ("boxes-8", boxes8)
             , ("boxes-9", boxes9)
             , ("boxes-10", boxes10)
+            , ("boxes-11", boxes11)
             ]
 
 boxes1 :: AnimatedPiece
@@ -195,9 +206,11 @@ center300 = translate $ Vector 100 100
 defaultZoom :: Rigged a => a -> a
 defaultZoom = scale 10
 
+-- | In which a disc spins quickly
 boxes4 :: AnimatedPiece
 boxes4 = defaultAnimatedPiece . fastRegion $ annulus 0 200
 
+-- | In which an annulus spins quickly
 boxes5 :: AnimatedPiece
 boxes5 = defaultAnimatedPiece . fastRegion $ annulus 100 225
 
@@ -208,10 +221,16 @@ fastRegion :: (Double -> Bool) -> Animated (Drawing ColorStyle)
 fastRegion inRegion = D.union <$> traverse spinner spinCoords
   where
     spinCoords = [(i, j) | i <- [1 .. 20 :: Int], j <- [1 .. 20 :: Int]]
-    spinner (i, j) = fmap (translate $ toVector i j) $ rotating (rate $ toVector i j) <*> pure sprite
+    spinner (i, j) =
+        fmap (translate $ toVector i j) $ rotating (rate $ toVector i j) <*> pure (sprite i j)
 
-    sprite = translate spriteCenterV . D.draw Foreground $ D.rectangle 15 15
+    sprite i j = translate spriteCenterV . D.draw (getColor i j) $ D.rectangle 15 15
     spriteCenterV = negateV $ Vector (15 / 2) (15 / 2)
+
+    getColor i j
+        | even i && even j = HighlightB
+        | even i || even j = HighlightA
+        | otherwise = Foreground
 
     toVector i j = Vector (fromIntegral i * s) (fromIntegral j * s)
     s = 500 / 21
@@ -307,20 +326,26 @@ boxes7 =
 boxes8 :: AnimatedPiece
 boxes8 = piece{viewFrame = originViewFrame}
   where
-    piece = defaultAnimatedPiece $ thisGrating <$> runner
+    piece = defaultAnimatedPiece $ thisGrating <$> runners
     thisGrating = grating ll ur 7 7 rect
     rect = translate (negateV $ Vector 20 20) $ D.rectangle 40 40
 
     ll = Point (-200) (-200)
     ur = Point 200 200
 
-    runner = followPath path origin <*> (rotating 1 <*> pure staticRunner)
-    path = circularPath (Time 1) origin 150
-    staticRunner =
+    runners =
         D.union
-            [ translate (Vector 20 0) . D.draw Foreground $ D.disc origin 15
-            , translate (Vector 0 20) . D.draw HighlightB $ D.disc origin 15
-            , D.draw HighlightA $ D.disc origin 80
+            <$> sequenceA
+                [ runner Foreground
+                , shiftLater (Time 0.33) $ runner HighlightA
+                , shiftLater (Time 0.66) $ runner HighlightB
+                ]
+
+    runner c = followPath path origin <*> (rotating 1 <*> pure (staticRunner c))
+    path = circularPath (Time 1) origin 150
+    staticRunner c =
+        D.union
+            [ D.draw c $ D.disc origin 80
             ]
 
 -- | In which a dot travels over boxes where some of the boxes are under and some are over
