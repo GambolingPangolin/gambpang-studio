@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module GambPang.Animation.Vignette (
@@ -19,7 +20,7 @@ import Data.Aeson (FromJSON (..), withObject, (.:))
 import Data.ByteArray (convert)
 import qualified Data.ByteString.Base16 as B16
 import Data.Char (isAlphaNum)
-import Data.Colour (Colour)
+import Data.Colour (Colour, blend)
 import Data.Colour.SRGB (
     RGB (..),
     toSRGB24,
@@ -32,6 +33,7 @@ import Lucid (HtmlT)
 import qualified Lucid as L
 import Lucid.Base (Html, commuteHtmlT, toHtml)
 
+import qualified Data.Colour.Names as Names
 import GambPang.Animation.ColorStyle (ColorStyle (..), Palette)
 
 style :: (ColorStyle -> Color) -> Css
@@ -109,7 +111,7 @@ vignette palette v = commuteHtmlT . L.html_ $ do
             . C.render
             . style
             . toCssPalette
-            $ palette
+            $ makeLegible palette
     L.body_ $ do
         heading . toHtml $ vignetteGreeting v
         L.div_ [L.class_ "content"] $ do
@@ -121,6 +123,12 @@ heading = L.h1_ . u_
 
 u_ :: Applicative m => HtmlT m a -> HtmlT m a
 u_ = L.term "u"
+
+makeLegible :: Palette -> Palette
+makeLegible p = \case
+    Background -> blend 0.6 Names.white $ p Background
+    Foreground -> blend 0.6 Names.black $ p Foreground
+    x -> p x
 
 toCssPalette :: (a -> Colour Double) -> a -> Color
 toCssPalette = (toCssColor .)
