@@ -378,3 +378,28 @@ boxes10 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
 
     ll = Point 50 50
     ur = Point 450 450
+
+-- | In which boxes on a grid flow accourding to a vertical sine wave
+boxes11 :: AnimatedPiece
+boxes11 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
+  where
+    mobileBox c p = scaleField hWaves p <*> pure (box c p)
+
+    hWaves = hWaveField <$> time
+    hWaveField (Time t) = hWaveValue t <$> point
+    hWaveValue t (Point _ y) = a * sin (y / 400 + 2 * pi * t)
+    a = 15
+
+    boxes = makeGrid ll ur 10 10 $ \i j -> mobileBox (getColor i j)
+    box c p =
+        translate (pointToVector p)
+            . translate (negateV $ Vector 15 15)
+            . D.draw c
+            $ D.rectangle 30 30
+    getColor i j
+        | (i + j) `mod` 3 == 0 = Foreground
+        | (i + j) `mod` 3 == 1 = HighlightA
+        | otherwise = HighlightB
+
+    ll = Point 50 50
+    ur = Point 450 450
