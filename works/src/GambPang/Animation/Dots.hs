@@ -16,6 +16,8 @@ module GambPang.Animation.Dots (
     dots11,
     dots12,
     dots13,
+    dots14,
+    dots15,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -93,6 +95,8 @@ animations paletteChoice =
             , ("dots-11", dots11)
             , ("dots-12", dots12)
             , ("dots-13", dots13)
+            , ("dots-14", dots14)
+            , ("dots-15", dots15)
             ]
 
 dots1 :: AnimatedPiece
@@ -433,15 +437,18 @@ dots12 = piece{viewFrame = originViewFrame, palette = calico}
 dots13 :: AnimatedPiece
 dots13 = piece{viewFrame = originViewFrame, frameCount = 200}
   where
-    piece = defaultAnimatedPiece $ layers <$> time <*> dot
-
-    dot = followPath path origin <*> pure staticDot
-    staticDot = D.draw Foreground $ D.disc origin 15
+    piece = defaultAnimatedPiece $ squareNavigator path
     path = toroidalPath rInnerPath rOuterPath verticalWindingNumber 1
 
     rInnerPath = 75
     rOuterPath = 200
     verticalWindingNumber = 5
+
+squareNavigator :: Animated Point -> Animated (Drawing ColorStyle)
+squareNavigator path = layers <$> time <*> dot
+  where
+    dot = followPath path origin <*> pure staticDot
+    staticDot = D.draw Foreground $ D.disc origin 15
 
     layers (Time t) d
         | isAbove t = D.union [frames, d]
@@ -449,8 +456,40 @@ dots13 = piece{viewFrame = originViewFrame, frameCount = 200}
 
     isAbove t = even @Int . floor $ 8 * t
 
-    frames = D.union [frameA, frameB, frameC, frameD]
+-- | In which dots fall among some rectangles
+dots14 :: AnimatedPiece
+dots14 = piece{viewFrame = originViewFrame, frameCount = 200}
+  where
+    piece = defaultAnimatedPiece $ squareNavigator path
 
+    path =
+        makeCircular (Time 1)
+            . piecewiseLinear
+            . pathProgram (Time 1)
+            $ Point mark 0 :| [Point 0 mark, Point (negate mark) 0, Point 0 (negate mark), Point mark 0]
+
+    mark = 160
+
+-- | In which dots fall among some rectangles
+dots15 :: AnimatedPiece
+dots15 = piece{viewFrame = originViewFrame, frameCount = 200}
+  where
+    piece = defaultAnimatedPiece $ squareNavigator path
+
+    path =
+        makeCircular (Time 1)
+            . piecewiseLinear
+            . pathProgram (Time 1)
+            $ Point 125 125
+                :| [ Point 125 (-125)
+                   , Point (-125) (-125)
+                   , Point (-125) 125
+                   , Point 125 125
+                   ]
+
+frames :: Drawing ColorStyle
+frames = D.union [frameA, frameB, frameC, frameD]
+  where
     frameA = translate (Vector 125 125) $ frame HighlightA
     frameB = translate (Vector (-125) 125) $ frame HighlightB
     frameC = translate (Vector 125 (-125)) $ frame HighlightB
