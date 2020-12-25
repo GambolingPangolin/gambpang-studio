@@ -19,6 +19,7 @@ module GambPang.Animation.Dots (
     dots14,
     dots15,
     dots16,
+    dots17,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -33,6 +34,7 @@ import GambPang.Animation (
     Vector (..),
     backwards,
     circularPath,
+    compress,
     followPath,
     makeCircular,
     negateV,
@@ -57,6 +59,7 @@ import GambPang.Animation.ColorStyle (
     PaletteChoice,
     calico,
     californiacoast,
+    desert,
     france,
     lux,
     snowy,
@@ -100,6 +103,7 @@ animations paletteChoice =
             , ("dots-14", dots14)
             , ("dots-15", dots15)
             , ("dots-16", dots16)
+            , ("dots-17", dots17)
             ]
 
 dots1 :: AnimatedPiece
@@ -524,3 +528,29 @@ dots16Field a = mkField <$> time
         let v = pointToVector p
             s = sin . (2 * pi *) $ norm v / 250 + t
          in 1 + a * s
+
+-- | In which we pan along as a dot describes sinusoidal path
+dots17 :: AnimatedPiece
+dots17 = piece{viewFrame = originViewFrame, palette = desert}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> sequenceA ([pure leftBoundary, pure rightBoundary] <> dots)
+
+    leftBoundary = translate (negateV $ Vector 250 250) . D.draw Foreground $ D.rectangle 50 500
+    rightBoundary = translate (Vector 450 0) leftBoundary
+
+    dA = dot HighlightA
+    dB = dot HighlightB
+    dots =
+        [ shiftEarlier (Time 0.5) dA
+        , shiftEarlier (Time 0.25) dB
+        , dA
+        , shiftLater (Time 0.25) dB
+        , shiftLater (Time 0.5) dA
+        , shiftLater (Time 0.75) dB
+        ]
+    dot c = compress (4 / 3) $ followPath path origin <*> pure (staticDot c)
+    staticDot c = D.draw c $ D.disc origin 20
+
+    path = mkPath <$> time
+    mkPath (Time t) = Point (a * sin (2 * pi * t)) (500 * (t - 0.5))
+    a = 180

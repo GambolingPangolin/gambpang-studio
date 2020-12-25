@@ -111,9 +111,9 @@ caribbean = \case
 
 desert :: Palette
 desert = \case
-    Background -> sRGB24read "#fea456"
+    Background -> sRGB24read "#e8a884"
     Foreground -> sRGB24read "#8c6b28"
-    HighlightA -> sRGB24read "#e8a884"
+    HighlightA -> sRGB24read "#ee9446"
     HighlightB -> sRGB24read "#c8d9e0"
 
 cubs :: Palette
