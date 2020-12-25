@@ -21,8 +21,10 @@ module GambPang.Animation.Dots (
     dots16,
     dots17,
     dots18,
+    dots19,
 ) where
 
+import Data.List (sortOn)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -65,6 +67,7 @@ import GambPang.Animation.ColorStyle (
     france,
     greenroom,
     lux,
+    markets,
     snowy,
     sunrise,
     terracotta,
@@ -110,6 +113,7 @@ animations paletteChoice =
             , ("dots-16", dots16)
             , ("dots-17", dots17)
             , ("dots-18", dots18)
+            , ("dots-19", dots19)
             ]
 
 dots1 :: AnimatedPiece
@@ -457,8 +461,8 @@ squareNavigator path = layers <$> time <*> dot
     staticDot = D.draw Foreground $ D.disc origin 15
 
     layers (Time t) d
-        | isAbove t = D.union [frames, d]
-        | otherwise = D.union [d, frames]
+        | isAbove t = D.union [quadFrames, d]
+        | otherwise = D.union [d, quadFrames]
 
     isAbove t = even @Int . floor $ 8 * t
 
@@ -493,8 +497,8 @@ dots15 = piece{viewFrame = originViewFrame, frameCount = 200}
                    , Point 125 125
                    ]
 
-frames :: Drawing ColorStyle
-frames = D.union [frameA, frameB, frameC, frameD]
+quadFrames :: Drawing ColorStyle
+quadFrames = D.union [frameA, frameB, frameC, frameD]
   where
     frameA = translate (Vector 125 125) $ frame HighlightA
     frameB = translate (Vector (-125) 125) $ frame HighlightB
@@ -577,3 +581,46 @@ dots18 = piece{viewFrame = originViewFrame, palette = greenroom, frameCount = 20
     mkScalar x = 1 + d * x
     a = 100
     d = 1
+
+-- | In which dots navigate some square layers
+dots19 :: AnimatedPiece
+dots19 = piece{palette = markets, frameCount = 200}
+  where
+    piece = defaultAnimatedPiece sortedItems
+    frame = squareFrame 100 130
+
+    sortedItems = D.union . fmap snd . sortOn fst <$> sequenceA items
+    items = sortableDot : (pure <$> sortableFrames)
+    sortableFrames = zip frameCenters frames
+
+    frames = mkFrame <$> frameDefs
+    mkFrame (v, c) = translate v $ frame c
+    frameDefs = zip frameVs colors
+    colors =
+        [ Foreground
+        , HighlightA
+        , Foreground
+        , HighlightA
+        , Foreground
+        , HighlightA
+        ]
+
+    frameVs = mkFrameV <$> frameCenters
+    frameCenters = mkScalar <$> [0 :: Int .. 4]
+    mkFrameV x = Vector x x
+
+    mkScalar i = 140 + fromIntegral i * w
+    w = (p2 - p1) / 4
+    p1 = 140
+    p2 = 360
+
+    dot = followPath dotPath origin <*> pure staticDot
+    sortableDot = mkDotEntry <$> time <*> dot
+    mkDotEntry (Time t) d = (500 * t, d)
+    staticDot = D.draw HighlightB $ D.disc origin 30
+
+    dotPath =
+        makeCircular (Time 1)
+            . piecewiseLinear
+            . pathProgram (Time 1)
+            $ Point 0 0 :| [Point 500 500]
