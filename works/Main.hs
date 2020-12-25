@@ -6,7 +6,7 @@ module Main where
 import Control.Applicative (many, optional, (<**>))
 import Control.Concurrent.Async (async, wait)
 import Control.Exception (throwIO)
-import Control.Monad (foldM, when, (>=>))
+import Control.Monad (foldM, unless, when, (>=>))
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.Trans.Except (except, runExceptT)
 import qualified Data.ByteString.Lazy as BSL
@@ -20,6 +20,7 @@ import qualified Data.Yaml as Y
 import Lucid (renderToFile)
 import Options.Applicative (ParserInfo)
 import qualified Options.Applicative as Opt
+import System.Directory (doesFileExist)
 import qualified System.Directory as D
 import System.FilePath ((<.>), (</>))
 
@@ -109,7 +110,8 @@ vignetteTask outPath (v, palette, animation) = do
     outFile = outPath </> Text.unpack (V.vignetteId v) <.> "html"
     animPath = outPath </> Text.unpack (V.vignetteAnimFilePath v)
     tasks = do
-        _ <- liftIO . BSL.writeFile animPath =<< except (renderGif animation)
+        haveAnim <- liftIO $ doesFileExist animPath
+        unless haveAnim $ liftIO . BSL.writeFile animPath =<< except (renderGif animation)
         liftIO . renderToFile outFile =<< except (V.vignette palette v)
     onError = TIO.putStrLn
 

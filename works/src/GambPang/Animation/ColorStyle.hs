@@ -86,10 +86,10 @@ californiacoast = \case
 
 cubs :: Palette
 cubs = \case
-    Background -> Names.blue
-    Foreground -> Names.red
-    HighlightA -> Names.grey
-    HighlightB -> Names.white
+    Background -> Names.white
+    Foreground -> Names.blue
+    HighlightA -> Names.red
+    HighlightB -> Names.grey
 
 france :: Palette
 france = \case

@@ -34,7 +34,6 @@ import Lucid.Base (Html, commuteHtmlT, toHtml)
 
 import GambPang.Animation.ColorStyle (ColorStyle (..), Palette)
 
--- TODO Fix font loading/styling
 style :: (ColorStyle -> Color) -> Css
 style palette = do
     C.body ? do
@@ -51,7 +50,11 @@ style palette = do
         C.fontFamily [heavyFont] [C.serif]
         C.u ? colorUnderline hlA
 
-    ".content" ? C.paddingLeft (C.rem 5)
+    ".content" ? do
+        C.width (C.px 500)
+        C.textAlign C.justify
+        C.fontSize (C.pt 14)
+
     ".animation" ? C.img ? C.border C.solid (C.px 1) fg
 
     C.fontFace $ do
@@ -109,15 +112,12 @@ vignette palette v = commuteHtmlT . L.html_ $ do
             $ palette
     L.body_ $ do
         heading . toHtml $ vignetteGreeting v
-        L.p_ [L.class_ "content"] . toHtml $ vignetteMessage v
-        subheading . toHtml $ vignetteTitle v
-        L.div_ [L.class_ "animation content"] $ L.img_ [L.src_ $ vignetteAnimFilePath v]
+        L.div_ [L.class_ "content"] $ do
+            L.p_ . toHtml $ vignetteMessage v
+            L.div_ [L.class_ "animation"] $ L.img_ [L.src_ $ vignetteAnimFilePath v]
 
 heading :: Applicative m => HtmlT m a -> HtmlT m a
 heading = L.h1_ . u_
-
-subheading :: Applicative m => HtmlT m a -> HtmlT m a
-subheading = L.h2_ . u_
 
 u_ :: Applicative m => HtmlT m a -> HtmlT m a
 u_ = L.term "u"
@@ -133,7 +133,7 @@ toCssColor =
 
 -- | Calculate an approximate identifier.  This only covers the text part of the vignette.
 vignetteId :: Vignette -> Text
-vignetteId v = reduceCharSet (vignetteGreeting v) <> "-" <> sha256Text 4 content
+vignetteId v = reduceCharSet (vignetteTitle v) <> "-" <> sha256Text 4 content
   where
     reduceCharSet = Text.map toLimitedCharSet
     toLimitedCharSet c
