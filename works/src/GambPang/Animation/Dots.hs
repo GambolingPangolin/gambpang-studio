@@ -20,6 +20,7 @@ module GambPang.Animation.Dots (
     dots15,
     dots16,
     dots17,
+    dots18,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -46,6 +47,7 @@ import GambPang.Animation (
     point,
     pointToVector,
     rotateO,
+    scale,
     shiftEarlier,
     shiftLater,
     time,
@@ -61,6 +63,7 @@ import GambPang.Animation.ColorStyle (
     californiacoast,
     desert,
     france,
+    greenroom,
     lux,
     snowy,
     sunrise,
@@ -81,6 +84,8 @@ import GambPang.Animation.Utils (
     rotating,
     scaleField,
     translationField,
+    unitBump,
+    unitField,
  )
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
@@ -104,6 +109,7 @@ animations paletteChoice =
             , ("dots-15", dots15)
             , ("dots-16", dots16)
             , ("dots-17", dots17)
+            , ("dots-18", dots18)
             ]
 
 dots1 :: AnimatedPiece
@@ -419,7 +425,7 @@ dots12 = piece{viewFrame = originViewFrame, palette = calico}
     ll = Point (-200) (-200)
     ur = Point 200 200
 
-    wobblingDot c p = translationField bumpField p <*> pure (dot c p)
+    wobblingDot c p = translationField movingBumpField p <*> pure (dot c p)
     dot c p = D.draw c $ D.disc p 5
 
     getColor i j
@@ -427,17 +433,10 @@ dots12 = piece{viewFrame = originViewFrame, palette = calico}
         | (i + j) `mod` 3 == 1 = HighlightA
         | otherwise = HighlightB
 
-    bumpField = followPath (circularPath (Time 1) origin 165) origin <*> pure bumpField0
-    bumpField0 = bumpFieldVector <$> point
-    bumpFieldVector (Point 0 0) = Vector 0 0
-    bumpFieldVector p =
-        let dx = s * ndx
-            dy = s * ndy
-            vp = pointToVector p
-            s = (d *) . exp . negate $ (a * norm vp) ^ (2 :: Int)
-            Vector ndx ndy = normalize vp
-         in Vector dx dy
-    a = 1 / 100
+    movingBumpField = followPath (circularPath (Time 1) origin 165) origin <*> pure bumpField
+    bumpField = mkBumpField <$> scale a unitBump <*> unitField
+    mkBumpField x v = scale (d * x) v
+    a = 100
     d = 10
 
 -- | In which dots interleave among some rectangles
@@ -554,3 +553,27 @@ dots17 = piece{viewFrame = originViewFrame, palette = desert}
     path = mkPath <$> time
     mkPath (Time t) = Point (a * sin (2 * pi * t)) (500 * (t - 0.5))
     a = 180
+
+-- | In which dots scale according to a moving bump
+dots18 :: AnimatedPiece
+dots18 = piece{viewFrame = originViewFrame, palette = greenroom, frameCount = 200}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+
+    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
+    ll = Point (-200) (-200)
+    ur = Point 200 200
+
+    wobblingDot c p = scaleField movingBumpField p <*> pure (dot c p)
+    dot c p = D.draw c $ D.disc p 5
+
+    getColor i j
+        | (i + j) `mod` 3 == 0 = Foreground
+        | (i + j) `mod` 3 == 1 = HighlightA
+        | otherwise = HighlightB
+
+    movingBumpField = followPath (circularPath (Time 1) origin 165) origin <*> pure bumpField
+    bumpField = mkScalar <$> scale a unitBump
+    mkScalar x = 1 + d * x
+    a = 100
+    d = 1

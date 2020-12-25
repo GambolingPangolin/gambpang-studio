@@ -12,6 +12,8 @@ module GambPang.Animation.Utils (
     grating,
     translationField,
     scaleField,
+    unitField,
+    unitBump,
 ) where
 
 import Data.ByteString (ByteString)
@@ -26,9 +28,12 @@ import GambPang.Animation (
     Point (..),
     Rigged (..),
     Time (Time),
-    Vector,
+    Vector (..),
     ViewFrame (..),
     negateV,
+    norm,
+    normalize,
+    point,
     pointToVector,
     rotateO,
     scale,
@@ -149,3 +154,14 @@ scaleField a p = mkScale <$> a
          in translate v
                 . scale (valueAtPoint p f)
                 . translate (negateV v)
+
+unitField :: Field2D Vector
+unitField = mkUnit <$> point
+  where
+    mkUnit (Point 0 0) = Vector 0 0
+    mkUnit p = normalize (pointToVector p)
+
+unitBump :: Field2D Double
+unitBump = gaussian . norm . pointToVector <$> point
+  where
+    gaussian x = exp . negate $ x ^ (2 :: Int)
