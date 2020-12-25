@@ -15,6 +15,7 @@ module GambPang.Animation.Boxes (
     boxes10,
     boxes11,
     boxes12,
+    boxes13,
 ) where
 
 import Control.Arrow (Arrow ((***)))
@@ -84,6 +85,7 @@ animations paletteChoice =
             , ("boxes-10", boxes10)
             , ("boxes-11", boxes11)
             , ("boxes-12", boxes12)
+            , ("boxes-13", boxes13)
             ]
 
 boxes1 :: AnimatedPiece
@@ -467,6 +469,12 @@ boxes12 = piece{palette = markets, frameCount = 200}
     right = (,9) <$> [3 .. 9]
     top = reverse $ (9,) <$> [2 .. 8]
     left = reverse $ (,2) <$> [3 .. 8]
+
+boxes13 :: AnimatedPiece
+boxes13 = piece{palette = markets, frameCount = 200}
+  where
+    piece = defaultAnimatedPiece $ swapSet locs
+    locs = [(2, 2), (2, 9), (9, 9), (9, 2), (4, 4), (4, 7), (7, 7), (7, 4)]
 
 swapSet :: [(Int, Int)] -> Animated (Drawing ColorStyle)
 swapSet swaps = D.union <$> sequenceA steps
