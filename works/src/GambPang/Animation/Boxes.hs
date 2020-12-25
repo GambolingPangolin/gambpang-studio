@@ -318,8 +318,9 @@ boxes8 = piece{viewFrame = originViewFrame}
     path = circularPath (Time 1) origin 150
     staticRunner =
         D.union
-            [ translate (Vector 20 0) . D.draw HighlightA $ D.disc origin 20
-            , D.draw Foreground $ D.disc origin 80
+            [ translate (Vector 20 0) . D.draw Foreground $ D.disc origin 15
+            , translate (Vector 0 20) . D.draw HighlightB $ D.disc origin 15
+            , D.draw HighlightA $ D.disc origin 80
             ]
 
 -- | In which a dot travels over boxes where some of the boxes are under and some are over
