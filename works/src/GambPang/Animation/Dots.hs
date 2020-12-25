@@ -14,6 +14,7 @@ module GambPang.Animation.Dots (
     dots9,
     dots10,
     dots11,
+    dots12,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -22,8 +23,10 @@ import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
     Animated (..),
+    Motion,
     Path,
     Point (..),
+    Rigged,
     Time (..),
     Vector (..),
     backwards,
@@ -36,12 +39,15 @@ import GambPang.Animation (
     origin,
     pathProgram,
     piecewiseLinear,
+    point,
     pointToVector,
     rotateO,
     shiftEarlier,
     shiftLater,
     time,
     translate,
+    valueAtPoint,
+    valueAtTime,
  )
 import GambPang.Animation.Drawing (Drawing)
 import qualified GambPang.Animation.Drawing as D
@@ -49,6 +55,7 @@ import qualified GambPang.Animation.Drawing as D
 import GambPang.Animation.ColorStyle (
     ColorStyle (..),
     PaletteChoice,
+    calico,
     californiacoast,
     france,
     lux,
@@ -56,6 +63,7 @@ import GambPang.Animation.ColorStyle (
     sunrise,
     terracotta,
  )
+import GambPang.Animation.Field2D (Field2D)
 import GambPang.Animation.Piece (
     AnimatedPiece (..),
     AnimationSource (AnimatedDrawing),
@@ -84,6 +92,7 @@ animations paletteChoice =
             , ("dots-9", dots9)
             , ("dots-10", dots10)
             , ("dots-11", dots11)
+            , ("dots-12", dots12)
             ]
 
 dots1 :: AnimatedPiece
@@ -262,24 +271,36 @@ dots7 = piece{viewFrame = originViewFrame, palette = terracotta}
   where
     piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
     dot c p = D.draw c $ D.disc p 5
-    wobblingDot c p = translate <$> (displacementField 7.5 p <$> time) <*> pure (dot c p)
+    wobblingDot c p = translationField (displacementField 7.5) p <*> pure (dot c p)
     dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
     ll = Point (-200) (-200)
     ur = Point 200 200
 
     getColor i j
-        | i + j `mod` 3 == 0 = Foreground
-        | i + j `mod` 3 == 1 = HighlightA
+        | (i + j) `mod` 3 == 0 = Foreground
+        | (i + j) `mod` 3 == 1 = HighlightA
         | otherwise = HighlightB
 
-displacementField :: Double -> Point -> Time -> Vector
-displacementField a p (Time t) = Vector dx dy
+translationField ::
+    Rigged a =>
+    Animated (Field2D Vector) ->
+    Point ->
+    Motion a
+translationField a p = fmap mkTranslation $ valueAtTime <$> time <*> pure a
   where
-    v = pointToVector p
-    u = normalize v
-    s = (a *) . sin . (2 * pi *) $ norm v / 250 + t
-    dx = s * displacementX u
-    dy = s * displacementY u
+    mkTranslation f = translate $ valueAtPoint p f
+
+displacementField :: Double -> Animated (Field2D Vector)
+displacementField a = mkField <$> time
+  where
+    mkField (Time t) = getVector t <$> point
+    getVector t p =
+        let v = pointToVector p
+            u = normalize v
+            s = (a *) . sin . (2 * pi *) $ norm v / 250 + t
+            dx = s * displacementX u
+            dy = s * displacementY u
+         in Vector dx dy
 
 -- | In which dots at the top scroll by faster than dots on the bottom
 dots8 :: AnimatedPiece
@@ -391,3 +412,34 @@ squareFrame s1 s2 c = D.exclude sq1 $ D.draw c sq2
   where
     sq1 = translate (negateV $ Vector s1 s1) $ D.rectangle (2 * s1) (2 * s1)
     sq2 = translate (negateV $ Vector s2 s2) $ D.rectangle (2 * s2) (2 * s2)
+
+-- | In which a bump propagates through a dot field
+dots12 :: AnimatedPiece
+dots12 = piece{viewFrame = originViewFrame, palette = calico}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+
+    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
+    ll = Point (-200) (-200)
+    ur = Point 200 200
+
+    wobblingDot c p = translationField bumpField p <*> pure (dot c p)
+    dot c p = D.draw c $ D.disc p 5
+
+    getColor i j
+        | (i + j) `mod` 3 == 0 = Foreground
+        | (i + j) `mod` 3 == 1 = HighlightA
+        | otherwise = HighlightB
+
+    bumpField = followPath (circularPath (Time 1) origin 165) origin <*> pure bumpField0
+    bumpField0 = bumpFieldVector <$> point
+    bumpFieldVector (Point 0 0) = Vector 0 0
+    bumpFieldVector p =
+        let dx = s * ndx
+            dy = s * ndy
+            vp = pointToVector p
+            s = (d *) . exp . negate $ (a * norm vp) ^ (2 :: Int)
+            Vector ndx ndy = normalize vp
+         in Vector dx dy
+    a = 1 / 100
+    d = 10
