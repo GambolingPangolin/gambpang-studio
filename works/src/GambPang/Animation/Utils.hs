@@ -28,6 +28,7 @@ import GambPang.Animation (
     Time (Time),
     Vector,
     ViewFrame (..),
+    negateV,
     pointToVector,
     rotateO,
     scale,
@@ -143,4 +144,8 @@ scaleField ::
     Motion a
 scaleField a p = mkScale <$> a
   where
-    mkScale = scale . valueAtPoint p
+    mkScale f =
+        let v = pointToVector p
+         in translate v
+                . scale (valueAtPoint p f)
+                . translate (negateV v)

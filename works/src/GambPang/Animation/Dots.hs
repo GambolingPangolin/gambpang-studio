@@ -18,6 +18,7 @@ module GambPang.Animation.Dots (
     dots13,
     dots14,
     dots15,
+    dots16,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -75,6 +76,7 @@ import GambPang.Animation.Utils (
     makeGrid,
     originViewFrame,
     rotating,
+    scaleField,
     translationField,
  )
 
@@ -97,6 +99,7 @@ animations paletteChoice =
             , ("dots-13", dots13)
             , ("dots-14", dots14)
             , ("dots-15", dots15)
+            , ("dots-16", dots16)
             ]
 
 dots1 :: AnimatedPiece
@@ -496,3 +499,28 @@ frames = D.union [frameA, frameB, frameC, frameD]
     frameD = translate (Vector (-125) (-125)) $ frame HighlightA
 
     frame c = squareFrame 80 100 c
+
+-- | In which dots are scaled by an ocillating field
+dots16 :: AnimatedPiece
+dots16 = piece{viewFrame = originViewFrame, palette = terracotta}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+    dot c p = D.draw c $ D.disc p 5
+    wobblingDot c p = scaleField (dots16Field 0.5) p <*> pure (dot c p)
+    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
+    ll = Point (-200) (-200)
+    ur = Point 200 200
+
+    getColor i j
+        | (i + j) `mod` 3 == 0 = Foreground
+        | (i + j) `mod` 3 == 1 = HighlightA
+        | otherwise = HighlightB
+
+dots16Field :: Double -> Animated (Field2D Double)
+dots16Field a = mkField <$> time
+  where
+    mkField (Time t) = getScalar t <$> point
+    getScalar t p =
+        let v = pointToVector p
+            s = sin . (2 * pi *) $ norm v / 250 + t
+         in 1 + a * s
