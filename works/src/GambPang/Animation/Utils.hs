@@ -11,6 +11,7 @@ module GambPang.Animation.Utils (
     makeGrid,
     grating,
     translationField,
+    scaleField,
 ) where
 
 import Data.ByteString (ByteString)
@@ -29,10 +30,10 @@ import GambPang.Animation (
     ViewFrame (..),
     pointToVector,
     rotateO,
+    scale,
     time,
     translate,
     valueAtPoint,
-    valueAtTime,
  )
 import qualified GambPang.Animation.Drawing as D
 
@@ -131,6 +132,15 @@ translationField ::
     Animated (Field2D Vector) ->
     Point ->
     Motion a
-translationField a p = fmap mkTranslation $ valueAtTime <$> time <*> pure a
+translationField a p = mkTranslation <$> a
   where
-    mkTranslation f = translate $ valueAtPoint p f
+    mkTranslation = translate . valueAtPoint p
+
+scaleField ::
+    Rigged a =>
+    Animated (Field2D Double) ->
+    Point ->
+    Motion a
+scaleField a p = mkScale <$> a
+  where
+    mkScale = scale . valueAtPoint p
