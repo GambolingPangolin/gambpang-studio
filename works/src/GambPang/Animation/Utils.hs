@@ -14,6 +14,9 @@ module GambPang.Animation.Utils (
     scaleField,
     unitField,
     unitBump,
+    Pointed (..),
+    midpoint,
+    rotatingP,
 ) where
 
 import Data.ByteString (ByteString)
@@ -35,6 +38,7 @@ import GambPang.Animation (
     normalize,
     point,
     pointToVector,
+    rotate,
     rotateO,
     scale,
     time,
@@ -70,10 +74,15 @@ rotating ::
     Rigged a =>
     -- | Rate of rotation
     Double ->
-    Animated (a -> a)
+    Motion a
 rotating r = rot <$> time
   where
     rot (Time t) = rotateO (2 * r * t * pi)
+
+rotatingP :: Rigged a => Point -> Double -> Motion a
+rotatingP p r = rot <$> time
+  where
+    rot (Time t) = rotate p (2 * r * t * pi)
 
 translations :: (Functor f, Rigged b) => b -> f Vector -> f b
 translations s = fmap (`translate` s)
@@ -165,3 +174,25 @@ unitBump :: Field2D Double
 unitBump = gaussian . norm . pointToVector <$> point
   where
     gaussian x = exp . negate $ x ^ (2 :: Int)
+
+data Pointed a = Pointed
+    { basePoint :: Point
+    , object :: a
+    }
+    deriving (Eq, Show)
+
+instance Functor Pointed where
+    fmap f (Pointed bp o) = Pointed bp $ f o
+
+instance Rigged a => Rigged (Pointed a) where
+    transform t (Pointed bp o) =
+        Pointed
+            { basePoint = transform t bp
+            , object = transform t o
+            }
+
+midpoint :: Point -> Point -> Point
+midpoint (Point x1 y1) (Point x2 y2) = Point mx my
+  where
+    mx = (x1 + x2) / 2
+    my = (y1 + y2) / 2

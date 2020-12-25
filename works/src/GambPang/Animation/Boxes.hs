@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 module GambPang.Animation.Boxes (
     animations,
@@ -13,8 +14,11 @@ module GambPang.Animation.Boxes (
     boxes9,
     boxes10,
     boxes11,
+    boxes12,
 ) where
 
+import Control.Arrow (Arrow ((***)))
+import Data.List (partition)
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -28,6 +32,7 @@ import GambPang.Animation (
     Vector (..),
     cameraPan,
     circularPath,
+    compress,
     followPath,
     makeCircular,
     negateV,
@@ -44,18 +49,20 @@ import GambPang.Animation (
     time,
     translate,
  )
+import GambPang.Animation.Drawing (Shape)
 import qualified GambPang.Animation.Drawing as D
 
-import Control.Arrow (Arrow ((***)))
-import Data.List (partition)
-import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs, ozarks)
+import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs, markets, ozarks)
 import GambPang.Animation.Piece (AnimatedPiece (..), applyPaletteChoice)
 import GambPang.Animation.Utils (
+    Pointed (..),
     defaultAnimatedPiece,
     grating,
     makeGrid,
+    midpoint,
     originViewFrame,
     rotating,
+    rotatingP,
     scaleField,
     translationField,
     union2,
@@ -76,6 +83,7 @@ animations paletteChoice =
             , ("boxes-9", boxes9)
             , ("boxes-10", boxes10)
             , ("boxes-11", boxes11)
+            , ("boxes-12", boxes12)
             ]
 
 boxes1 :: AnimatedPiece
@@ -428,3 +436,73 @@ boxes11 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
 
     ll = Point 50 50
     ur = Point 450 450
+
+rectP :: Double -> Double -> Pointed Shape
+rectP w h =
+    Pointed
+        { basePoint = origin
+        , object = translate (negateV $ Vector (w / 2) (h / 2)) $ D.rectangle w h
+        }
+
+swapPointed :: Rigged a => Pointed a -> Pointed a -> Animated (Pointed a, Pointed a)
+swapPointed p1 p2 = rotatingP mp 0.5 <*> pure (p1, p2)
+  where
+    mp = midpoint (basePoint p1) (basePoint p2)
+
+data FlipBox = FlipBox
+    { index :: (Int, Int)
+    , flipBox :: Pointed (Drawing ColorStyle)
+    }
+
+instance Rigged FlipBox where
+    transform a (FlipBox ix p) = FlipBox ix $ transform a p
+
+-- | In which a special box moves around
+boxes12 :: AnimatedPiece
+boxes12 = piece{palette = markets, frameCount = 200}
+  where
+    piece = defaultAnimatedPiece $ swapSet locs
+    locs = bottom <> right <> top <> left
+    bottom = (2,) <$> [2 .. 9]
+    right = (,9) <$> [3 .. 9]
+    top = reverse $ (9,) <$> [2 .. 8]
+    left = reverse $ (,2) <$> [3 .. 8]
+
+swapSet :: [(Int, Int)] -> Animated (Drawing ColorStyle)
+swapSet swaps = D.union <$> sequenceA steps
+  where
+    boxes pos1 pos2 = compress (fromIntegral cFactor) . crop . applyFlip pos1 pos2 . makeGrid ll ur 10 10 $ mkBox pos1
+
+    cFactor = length swaps
+
+    swapPositions = zip swaps $ drop 1 (cycle swaps)
+
+    steps = zipWith shiftLater timeOffsets $ uncurry boxes <$> swapPositions
+
+    timeOffsets = Time . (/ fromIntegral cFactor) . fromIntegral <$> [0 .. cFactor]
+
+    crop a = runCrop <$> time <*> a
+    runCrop (Time t) d
+        | t >= 0 && t <= 1 = d
+        | otherwise = D.union mempty
+
+    mkBox pos i j p =
+        FlipBox
+            { index = (i, j)
+            , flipBox = translate (pointToVector p) $ D.draw (getColor pos i j) <$> rectP 20 20
+            }
+
+    getColor (i0, j0) i j
+        | i == i0 && j == j0 = HighlightA
+        | otherwise = Foreground
+
+    ll = Point 50 50
+    ur = Point 450 450
+
+applyFlip :: (Int, Int) -> (Int, Int) -> [FlipBox] -> Animated (Drawing ColorStyle)
+applyFlip pos1 pos2 bs = combine <$> swapPointed (flipBox b1) (flipBox b2)
+  where
+    ([b1], bs1) = partition ((== pos1) . index) bs
+    ([b2], bs2) = partition ((== pos2) . index) bs1
+
+    combine (p1, p2) = D.union $ object p1 : object p2 : (object . flipBox <$> bs2)

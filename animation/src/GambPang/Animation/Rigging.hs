@@ -34,6 +34,9 @@ class Rigged a where
 instance Rigged a => Rigged (Animated a) where
     transform a = fmap $ transform a
 
+instance (Rigged a, Rigged b) => Rigged (a, b) where
+    transform a (x, y) = (transform a x, transform a y)
+
 translate :: Rigged a => Vector -> a -> a
 translate = transform . translation
 
