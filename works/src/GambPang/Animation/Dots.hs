@@ -23,10 +23,8 @@ import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
     Animated (..),
-    Motion,
     Path,
     Point (..),
-    Rigged,
     Time (..),
     Vector (..),
     backwards,
@@ -46,8 +44,6 @@ import GambPang.Animation (
     shiftLater,
     time,
     translate,
-    valueAtPoint,
-    valueAtTime,
  )
 import GambPang.Animation.Drawing (Drawing)
 import qualified GambPang.Animation.Drawing as D
@@ -76,6 +72,7 @@ import GambPang.Animation.Utils (
     makeGrid,
     originViewFrame,
     rotating,
+    translationField,
  )
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
@@ -275,15 +272,6 @@ dots7 = piece{viewFrame = originViewFrame, palette = terracotta}
         | (i + j) `mod` 3 == 0 = Foreground
         | (i + j) `mod` 3 == 1 = HighlightA
         | otherwise = HighlightB
-
-translationField ::
-    Rigged a =>
-    Animated (Field2D Vector) ->
-    Point ->
-    Motion a
-translationField a p = fmap mkTranslation $ valueAtTime <$> time <*> pure a
-  where
-    mkTranslation f = translate $ valueAtPoint p f
 
 displacementField :: Double -> Animated (Field2D Vector)
 displacementField a = mkField <$> time

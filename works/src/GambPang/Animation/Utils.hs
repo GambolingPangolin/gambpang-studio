@@ -10,6 +10,7 @@ module GambPang.Animation.Utils (
     defaultAnimatedPiece,
     makeGrid,
     grating,
+    translationField,
 ) where
 
 import Data.ByteString (ByteString)
@@ -20,6 +21,7 @@ import qualified Data.Text as Text
 import GambPang.Animation (
     Animated,
     Drawing,
+    Motion,
     Point (..),
     Rigged (..),
     Time (Time),
@@ -29,6 +31,8 @@ import GambPang.Animation (
     rotateO,
     time,
     translate,
+    valueAtPoint,
+    valueAtTime,
  )
 import qualified GambPang.Animation.Drawing as D
 
@@ -37,6 +41,7 @@ import GambPang.Animation.ColorStyle (
     mellow,
  )
 import GambPang.Animation.Drawing (Shape)
+import GambPang.Animation.Field2D (Field2D)
 import GambPang.Animation.Piece (AnimatedPiece (..), AnimationSource (AnimatedDrawing))
 
 defaultViewFrame :: ViewFrame
@@ -120,3 +125,12 @@ grating ll ur n m s a = D.union $ makeGrid ll ur n m applyMask
   where
     applyMask _ _ p = D.mask (makeMask p) a
     makeMask p = translate (pointToVector p) s
+
+translationField ::
+    Rigged a =>
+    Animated (Field2D Vector) ->
+    Point ->
+    Motion a
+translationField a p = fmap mkTranslation $ valueAtTime <$> time <*> pure a
+  where
+    mkTranslation f = translate $ valueAtPoint p f

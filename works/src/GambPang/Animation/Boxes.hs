@@ -11,6 +11,7 @@ module GambPang.Animation.Boxes (
     boxes7,
     boxes8,
     boxes9,
+    boxes10,
 ) where
 
 import Data.List.NonEmpty (NonEmpty (..))
@@ -33,6 +34,7 @@ import GambPang.Animation (
     origin,
     pathProgram,
     piecewiseLinear,
+    point,
     pointToVector,
     rotateO,
     scale,
@@ -47,7 +49,7 @@ import Control.Arrow (Arrow ((***)))
 import Data.List (partition)
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs, ozarks)
 import GambPang.Animation.Piece (AnimatedPiece (..), applyPaletteChoice)
-import GambPang.Animation.Utils (defaultAnimatedPiece, grating, makeGrid, originViewFrame, rotating, union2)
+import GambPang.Animation.Utils (defaultAnimatedPiece, grating, makeGrid, originViewFrame, rotating, translationField, union2)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -62,6 +64,7 @@ animations paletteChoice =
             , ("boxes-7", boxes7)
             , ("boxes-8", boxes8)
             , ("boxes-9", boxes9)
+            , ("boxes-10", boxes10)
             ]
 
 boxes1 :: AnimatedPiece
@@ -311,9 +314,13 @@ boxes8 = piece{viewFrame = originViewFrame}
     ll = Point (-200) (-200)
     ur = Point 200 200
 
-    runner = followPath path origin <*> pure staticRunner
+    runner = followPath path origin <*> (rotating 1 <*> pure staticRunner)
     path = circularPath (Time 1) origin 150
-    staticRunner = D.draw Foreground $ D.disc origin 80
+    staticRunner =
+        D.union
+            [ translate (Vector 20 0) . D.draw HighlightA $ D.disc origin 20
+            , D.draw Foreground $ D.disc origin 80
+            ]
 
 -- | In which a dot travels over boxes where some of the boxes are under and some are over
 boxes9 :: AnimatedPiece
@@ -345,3 +352,28 @@ boxes9 = piece{frameCount = 200}
             . pathProgram (Time 1)
             . fmap (translate $ Vector 25 25)
             $ Point 0 100 :| [Point 100 450, Point 450 350, Point 350 0, Point 0 100]
+
+-- | In which boxes on a grid flow accourding to a vertical sine wave
+boxes10 :: AnimatedPiece
+boxes10 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
+  where
+    mobileBox c p = translationField hWaves p <*> pure (box c p)
+
+    hWaves = hWaveField <$> time
+    hWaveField (Time t) = hWaveValue t <$> point
+    hWaveValue t (Point _ y) = let v = a * sin (y / 400 + 2 * pi * t) in Vector v (negate v)
+    a = 15
+
+    boxes = makeGrid ll ur 10 10 $ \i j -> mobileBox (getColor i j)
+    box c p =
+        translate (pointToVector p)
+            . translate (negateV $ Vector 15 15)
+            . D.draw c
+            $ D.rectangle 30 30
+    getColor i j
+        | (i + j) `mod` 3 == 0 = Foreground
+        | (i + j) `mod` 3 == 1 = HighlightA
+        | otherwise = HighlightB
+
+    ll = Point 50 50
+    ur = Point 450 450
