@@ -12,15 +12,24 @@ module GambPang.Animation.ColorStyle (
     palettes,
     calico,
     californiacoast,
+    caribbean,
     cubs,
+    desert,
     france,
+    greyscale,
+    greenroom,
     lux,
+    markets,
     mellow,
     nightlights,
     ozarks,
+    poland,
+    primary,
     redandblack,
+    royal,
     snowy,
     sunrise,
+    sunset,
     verdant,
     vegetablegarden,
     terracotta,
@@ -56,15 +65,24 @@ palettes =
     Map.fromList
         [ ("calico", calico)
         , ("californiacoast", californiacoast)
+        , ("caribbean", caribbean)
         , ("cubs", cubs)
+        , ("desert", desert)
         , ("france", france)
+        , ("greyscale", greyscale)
+        , ("greenroom", greenroom)
         , ("lux", lux)
+        , ("markets", markets)
         , ("mellow", mellow)
         , ("nightlights", nightlights)
         , ("ozarks", ozarks)
+        , ("poland", poland)
+        , ("primary", primary)
         , ("redandblack", redandblack)
+        , ("royal", royal)
         , ("snowy", snowy)
         , ("sunrise", sunrise)
+        , ("sunset", sunset)
         , ("terracotta", terracotta)
         , ("vegetablegarden", vegetablegarden)
         , ("verdant", verdant)
@@ -84,6 +102,20 @@ californiacoast = \case
     HighlightA -> sRGB24read "#f0e4d3"
     HighlightB -> sRGB24read "#d0ebfe"
 
+caribbean :: Palette
+caribbean = \case
+    Background -> sRGB24read "#02dcff"
+    Foreground -> sRGB24read "#41393a"
+    HighlightA -> sRGB24read "#dbe91f"
+    HighlightB -> sRGB24read "#32620e"
+
+desert :: Palette
+desert = \case
+    Background -> sRGB24read "#fea456"
+    Foreground -> sRGB24read "#8c6b28"
+    HighlightA -> sRGB24read "#e8a884"
+    HighlightB -> sRGB24read "#c8d9e0"
+
 cubs :: Palette
 cubs = \case
     Background -> Names.white
@@ -98,12 +130,33 @@ france = \case
     HighlightA -> Names.blue
     HighlightB -> Names.red
 
+greyscale :: Palette
+greyscale = \case
+    Background -> Names.white
+    Foreground -> Names.lightgrey
+    HighlightA -> Names.darkgrey
+    HighlightB -> Names.black
+
+greenroom :: Palette
+greenroom = \case
+    Background -> Names.green
+    Foreground -> Names.beige
+    HighlightA -> Names.yellow
+    HighlightB -> Names.white
+
 lux :: Palette
 lux = \case
     Background -> Names.navy
     Foreground -> Names.gold
     HighlightA -> Names.silver
     HighlightB -> Names.white
+
+markets :: Palette
+markets = \case
+    Background -> sRGB24read "#ececec"
+    Foreground -> sRGB24read "#323232"
+    HighlightA -> sRGB24read "#dd7168"
+    HighlightB -> sRGB24read "#f8f8f8"
 
 mellow :: Palette
 mellow = \case
@@ -126,12 +179,33 @@ ozarks = \case
     HighlightA -> sRGB24read "#9aa15b"
     HighlightB -> sRGB24read "#bcd1e7"
 
+poland :: Palette
+poland = \case
+    Background -> sRGB24read "#dc143c"
+    Foreground -> Names.white
+    HighlightA -> Names.black
+    HighlightB -> Names.grey
+
+primary :: Palette
+primary = \case
+    Background -> Names.white
+    Foreground -> Names.blue
+    HighlightA -> Names.red
+    HighlightB -> Names.yellow
+
 redandblack :: Palette
 redandblack = \case
     Background -> Names.red
     Foreground -> Names.black
     HighlightA -> Names.darkred
     HighlightB -> Names.brown
+
+royal :: Palette
+royal = \case
+    Background -> Names.purple
+    Foreground -> Names.silver
+    HighlightA -> Names.yellow
+    HighlightB -> Names.gold
 
 snowy :: Palette
 snowy = \case
@@ -146,6 +220,13 @@ sunrise = \case
     Foreground -> sRGB24read "#fe8a52"
     HighlightA -> sRGB24read "#fdd981"
     HighlightB -> sRGB24read "#fefcdf"
+
+sunset :: Palette
+sunset = \case
+    Background -> sRGB24read "#571400"
+    Foreground -> sRGB24read "#e9750e"
+    HighlightA -> sRGB24read "#ffb42a"
+    HighlightB -> sRGB24read "#fff78a"
 
 terracotta :: Palette
 terracotta = \case
