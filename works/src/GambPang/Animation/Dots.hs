@@ -72,6 +72,7 @@ import GambPang.Animation.Piece (
 import GambPang.Animation.Utils (
     defaultAnimatedPiece,
     defaultViewFrame,
+    grating,
     makeGrid,
     originViewFrame,
     rotating,
@@ -247,7 +248,7 @@ dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
 
     dotMatrix = D.union $ makeGrid ll ur 7 7 topDot
 
-    thisGrating = grating ll ur 7 7 20
+    thisGrating = grating ll ur 7 7 (D.disc origin 20)
     hamster = followPath (circularPath (Time 1) origin 150) origin <*> pure dot
 
     dot = D.draw Foreground $ D.disc origin 80
@@ -258,12 +259,6 @@ dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
 
     ll = Point (-200) (-200)
     ur = Point 200 200
-
-grating :: Point -> Point -> Int -> Int -> Double -> Drawing color -> Drawing color
-grating ll ur n m r a = D.union $ makeGrid ll ur n m applyMask
-  where
-    applyMask _ _ p = D.mask (makeMask p) a
-    makeMask p = translate (pointToVector p) $ D.disc origin r
 
 -- | In which dots are displaced by an ocillating field
 dots7 :: AnimatedPiece

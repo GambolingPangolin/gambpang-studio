@@ -1,6 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module GambPang.Animation.Boxes where
+module GambPang.Animation.Boxes (
+    animations,
+    boxes1,
+    boxes2,
+    boxes3,
+    boxes4,
+    boxes5,
+    boxes6,
+    boxes7,
+    boxes8,
+    boxes9,
+) where
 
 import Data.List.NonEmpty (NonEmpty (..))
 import Data.Map (Map)
@@ -14,6 +25,7 @@ import GambPang.Animation (
     Time (..),
     Vector (..),
     cameraPan,
+    circularPath,
     followPath,
     makeCircular,
     negateV,
@@ -31,9 +43,11 @@ import GambPang.Animation (
  )
 import qualified GambPang.Animation.Drawing as D
 
+import Control.Arrow (Arrow ((***)))
+import Data.List (partition)
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, cubs, ozarks)
 import GambPang.Animation.Piece (AnimatedPiece (..), applyPaletteChoice)
-import GambPang.Animation.Utils (defaultAnimatedPiece, originViewFrame, rotating, union2)
+import GambPang.Animation.Utils (defaultAnimatedPiece, grating, makeGrid, originViewFrame, rotating, union2)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -46,6 +60,8 @@ animations paletteChoice =
             , ("boxes-5", boxes5)
             , ("boxes-6", boxes6)
             , ("boxes-7", boxes7)
+            , ("boxes-8", boxes8)
+            , ("boxes-9", boxes9)
             ]
 
 boxes1 :: AnimatedPiece
@@ -283,3 +299,49 @@ boxes7 =
     cameraPath =
         piecewiseLinear . pathProgram duration $
             origin :| [Point (10 * 30) (5 * 30)]
+
+-- | In which we see a dot under a grating of squares
+boxes8 :: AnimatedPiece
+boxes8 = piece{viewFrame = originViewFrame}
+  where
+    piece = defaultAnimatedPiece $ thisGrating <$> runner
+    thisGrating = grating ll ur 7 7 rect
+    rect = translate (negateV $ Vector 20 20) $ D.rectangle 40 40
+
+    ll = Point (-200) (-200)
+    ur = Point 200 200
+
+    runner = followPath path origin <*> pure staticRunner
+    path = circularPath (Time 1) origin 150
+    staticRunner = D.draw Foreground $ D.disc origin 80
+
+-- | In which a dot travels over boxes where some of the boxes are under and some are over
+boxes9 :: AnimatedPiece
+boxes9 = piece{frameCount = 200}
+  where
+    piece = defaultAnimatedPiece $ D.union <$> sequenceA (hiBoxes <> dots <> loBoxes)
+    (hiBoxes, loBoxes) = (toBoxes *** toBoxes) . partition (even . fst) $ zip [1 :: Int ..] boxes
+    toBoxes = fmap (pure . snd)
+    boxes = makeGrid ll ur 10 10 $ \_ _ -> box
+    box p =
+        translate (pointToVector p)
+            . translate (negateV $ Vector 15 15)
+            . D.draw Foreground
+            $ D.rectangle 30 30
+
+    ll = Point 50 50
+    ur = Point 450 450
+
+    dots =
+        [ dot HighlightA
+        , shiftLater (Time 0.1) (dot HighlightB)
+        ]
+
+    dot c = followPath path origin <*> pure (staticDot c)
+    staticDot c = D.draw c $ D.disc origin 10
+    path =
+        makeCircular (Time 1)
+            . piecewiseLinear
+            . pathProgram (Time 1)
+            . fmap (translate $ Vector 25 25)
+            $ Point 0 100 :| [Point 100 450, Point 450 350, Point 350 0, Point 0 100]

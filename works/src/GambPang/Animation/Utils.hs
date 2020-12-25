@@ -9,6 +9,7 @@ module GambPang.Animation.Utils (
     originViewFrame,
     defaultAnimatedPiece,
     makeGrid,
+    grating,
 ) where
 
 import Data.ByteString (ByteString)
@@ -24,6 +25,7 @@ import GambPang.Animation (
     Time (Time),
     Vector,
     ViewFrame (..),
+    pointToVector,
     rotateO,
     time,
     translate,
@@ -34,6 +36,7 @@ import GambPang.Animation.ColorStyle (
     ColorStyle,
     mellow,
  )
+import GambPang.Animation.Drawing (Shape)
 import GambPang.Animation.Piece (AnimatedPiece (..), AnimationSource (AnimatedDrawing))
 
 defaultViewFrame :: ViewFrame
@@ -104,3 +107,16 @@ mkLocation ll ur n m i j =
 
     hSep = (urx - llx) / (fromIntegral n - 1)
     vSep = (ury - lly) / (fromIntegral m - 1)
+
+grating ::
+    Point ->
+    Point ->
+    Int ->
+    Int ->
+    Shape ->
+    Drawing color ->
+    Drawing color
+grating ll ur n m s a = D.union $ makeGrid ll ur n m applyMask
+  where
+    applyMask _ _ p = D.mask (makeMask p) a
+    makeMask p = translate (pointToVector p) s
