@@ -3,7 +3,7 @@
 
 module GambPang.Animation.Scene (
     Time,
-    Animated (..),
+    Animated,
     valueAtTime,
     timeControl,
     time,

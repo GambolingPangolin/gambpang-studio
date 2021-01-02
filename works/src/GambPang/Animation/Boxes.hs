@@ -26,7 +26,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
-    Animated (..),
+    Animated,
     Drawing,
     Point (..),
     Rigged (..),
@@ -177,11 +177,11 @@ darkRect w h = D.draw Foreground $ D.rectangle w h
 
 -- | Nested boxes where the inner box rotates
 boxes2 :: AnimatedPiece
-boxes2 = defaultAnimatedPiece . center300 $ union2 <$> Animated rotator <*> pure backer
+boxes2 = defaultAnimatedPiece . center300 $ union2 <$> rotator <*> pure backer
   where
     backer = D.draw HighlightA $ D.rectangle 300 300
 
-    rotator = D.draw HighlightB . D.polygon . rotatorVertices
+    rotator = D.draw HighlightB . D.polygon . rotatorVertices <$> time
     rotatorVertices t =
         scale 300
             <$> [ Point 0 t

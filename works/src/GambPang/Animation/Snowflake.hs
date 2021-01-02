@@ -9,7 +9,7 @@ import qualified Data.Map as Map
 import Data.Monoid (Endo (..))
 import Data.Text (Text)
 import GambPang.Animation (
-    Animated (..),
+    Animated,
     Drawing,
     PiecewiseLinearPath (..),
     Point (..),

@@ -11,10 +11,11 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
-    Animated (..),
-    Field2D (Field2D),
+    Animated,
+    Field2D,
     Point (Point),
     Vector (..),
+    point,
     rotateO,
     scale,
     time,
@@ -68,7 +69,7 @@ scrollerAnim zoom a s = mkAnim <$> time
     rotatedScene = rotateO a s
 
 infiniteField :: a -> a -> Field2D a
-infiniteField lightPixel darkPixel = Field2D field
+infiniteField lightPixel darkPixel = field <$> point
   where
     field (Point x _)
         | even @Int (floor x) = darkPixel

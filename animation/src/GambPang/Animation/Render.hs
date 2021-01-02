@@ -37,7 +37,7 @@ import GambPang.Animation.Bitmap (
 import GambPang.Animation.Drawing.Internal (Drawing, mapColor, renderDrawing)
 import GambPang.Animation.Field2D (Field2D, valueAtPoint)
 import GambPang.Animation.Scene (
-    Animated (..),
+    Animated,
     Time,
     valueAtTime,
  )
@@ -86,7 +86,7 @@ renderAnimDrawing ::
     (color -> Colour Double) ->
     Animated (Drawing color) ->
     [Image PixelRGBA8]
-renderAnimDrawing n vf bg getColor (Animated a) = runST $ do
+renderAnimDrawing n vf bg getColor a = runST $ do
     img <- thawImage initialImage
     animationFrames <$> foldM (calcImage vf bg img) initialADState drawings
   where
@@ -98,9 +98,9 @@ sampleDrawings ::
     Int ->
     ViewFrame ->
     (color1 -> color2) ->
-    (Time -> Drawing color1) ->
+    Animated (Drawing color1) ->
     [Drawing color2]
-sampleDrawings n vf getColor a = (mapColor getColor . a <$> timeSamples vf n) `using` parList rpar
+sampleDrawings n vf getColor a = (mapColor getColor . (`valueAtTime` a) <$> timeSamples vf n) `using` parList rpar
 
 calcImage ::
     ViewFrame ->

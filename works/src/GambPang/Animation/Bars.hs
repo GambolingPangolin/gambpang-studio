@@ -13,7 +13,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
-    Animated (..),
+    Animated,
     Drawing,
     Point (..),
     Time,
@@ -25,7 +25,6 @@ import GambPang.Animation (
     negateV,
     origin,
     reflect,
-    rotateO,
     scale,
     scaleXY,
     shiftEarlier,
@@ -37,7 +36,7 @@ import qualified GambPang.Animation.Drawing as D
 
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, snowy, vegetablegarden)
 import GambPang.Animation.Piece (AnimatedPiece (palette, viewFrame), applyPaletteChoice)
-import GambPang.Animation.Utils (defaultAnimatedPiece, originViewFrame)
+import GambPang.Animation.Utils (defaultAnimatedPiece, originViewFrame, rotating)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -105,10 +104,8 @@ bars3 = defaultAnimatedPiece $ D.union <$> sequenceA components
         , pure bigBackground
         ]
     element = followPath path origin <*> rotatingMaskedStripes
-    rotatingMaskedStripes = motion <*> pure (D.mask circleMask background)
+    rotatingMaskedStripes = rotating 2 <*> pure (D.mask circleMask background)
 
-    motion = Animated $ rotateO . mkAngle
-    mkAngle t = 4 * pi * t
     circleMask = D.disc origin 50
     background = translate v $ stripes 10 h
 

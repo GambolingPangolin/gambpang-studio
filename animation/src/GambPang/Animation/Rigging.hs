@@ -26,7 +26,7 @@ import GambPang.Animation.LinearAlgebra (
     translation,
  )
 import GambPang.Animation.Path (Path)
-import GambPang.Animation.Scene (Animated (..))
+import GambPang.Animation.Scene (Animated)
 
 class Rigged a where
     transform :: AffineTransformation -> a -> a

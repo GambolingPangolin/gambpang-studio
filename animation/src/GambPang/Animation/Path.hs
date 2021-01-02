@@ -18,12 +18,12 @@ import GambPang.Animation.LinearAlgebra (
     displacement,
     norm,
  )
-import GambPang.Animation.Scene (Animated (..), Time, timeControl)
+import GambPang.Animation.Scene (Animated, Time, time, timeControl)
 
 type Path = Animated Point
 
 circularPath :: Time -> Point -> Double -> Animated Point
-circularPath t (Point x y) r = Animated thePath
+circularPath t (Point x y) r = thePath <$> time
   where
     thePath s = Point (x + r * cos (toRad s)) (y + r * sin (toRad s))
     toRad s = 2 * pi * s / t
@@ -52,7 +52,7 @@ pathProgram t ps@(_ :| (p : ps')) = mkPLP $ normalizeTime <$> pointPairs
     simpleSegment (t', _, p2) = (t', p2)
 
 piecewiseLinear :: PiecewiseLinearPath -> Path
-piecewiseLinear plp = Animated $ thePath plan
+piecewiseLinear plp = thePath plan <$> time
   where
     thePath (lps : lpss) t
         | 0 >= t = startPoint lps

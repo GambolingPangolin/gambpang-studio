@@ -30,7 +30,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
-    Animated (..),
+    Animated,
     Path,
     Point (..),
     Vector (..),
@@ -167,8 +167,8 @@ dots3 :: AnimatedPiece
 dots3 = defaultAnimatedPiece . translate v . fmap D.union $ traverse mkDot [0 .. 10]
   where
     mkDot i = shiftEarlier (i / 10) dot
-    dot = followPath sinPath p0 <*> pure d
-    sinPath = Animated $ \t -> let s = toCircular t in Point (500 * s) (200 * sin (2 * pi * s))
+    dot = followPath (sinPath <$> time) p0 <*> pure d
+    sinPath t = let s = toCircular t in Point (500 * s) (200 * sin (2 * pi * s))
     v = Vector 0 250
     d = D.draw Foreground $ D.disc origin 10
     p0 = origin
@@ -240,8 +240,9 @@ toroidalPath ::
     -- | Winding number (longitudinal)
     Double ->
     Path
-toroidalPath r1 r2 n m = Animated $ \t -> toroidalProjection r1 r2 (a1 t, a2 t)
+toroidalPath r1 r2 n m = mkPath <$> time
   where
+    mkPath t = toroidalProjection r1 r2 (a1 t, a2 t)
     a1 = (2 * pi * m *)
     a2 = (2 * pi * n *)
 

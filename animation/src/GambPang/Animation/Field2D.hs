@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module GambPang.Animation.Field2D (
-    Field2D (..),
+    Field2D,
     PixelField,
     point,
     valueAtPoint,
