@@ -84,7 +84,7 @@ stripeCount = 20
 
 bars2 :: AnimatedPiece
 bars2 =
-    defaultAnimatedPiece $ D.union <$> sequenceA components
+    defaultAnimatedPiece $ D.composite components
   where
     components =
         [ rotatingMask
@@ -96,7 +96,7 @@ bars2 =
     path = circularPath 1 (Point 250 250) 100
 
 bars3 :: AnimatedPiece
-bars3 = defaultAnimatedPiece $ D.union <$> sequenceA components
+bars3 = defaultAnimatedPiece $ D.composite components
   where
     components =
         [ element
@@ -133,7 +133,7 @@ bars4 = piece{palette = vegetablegarden, viewFrame = originViewFrame}
     piece = defaultAnimatedPiece canyonExit
 
 canyonExit :: Animated (Drawing ColorStyle)
-canyonExit = makeCircular 1 $ D.union <$> sequenceA [leftSide, rightSide]
+canyonExit = makeCircular 1 $ D.composite [leftSide, rightSide]
   where
     leftSide = animateScale <*> (pure . scaleXY (16 * 500) 500 . D.union) boxes
     rightSide = reflect (Vector 1 0) origin leftSide

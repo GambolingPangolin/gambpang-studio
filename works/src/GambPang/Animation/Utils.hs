@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module GambPang.Animation.Utils (
-    union2,
     dataUrl,
     defaultViewFrame,
     originViewFrame,
@@ -60,9 +59,6 @@ defaultViewFrame =
 
 originViewFrame :: ViewFrame
 originViewFrame = defaultViewFrame{lowerLeft = (-250, -250)}
-
-union2 :: Drawing color -> Drawing color -> Drawing color
-union2 x y = D.union [x, y]
 
 translations :: (Functor f, Rigged b) => b -> f Vector -> f b
 translations s = fmap (`translate` s)

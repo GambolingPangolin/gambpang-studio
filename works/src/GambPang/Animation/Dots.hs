@@ -178,13 +178,13 @@ dots4 :: AnimatedPiece
 dots4 =
     AnimatedPiece
         { source =
-            AnimatedDrawing $
-                translate v . D.union
-                    <$> sequenceA
-                        [ dotElement
-                        , rotateO (2 * pi / 3) dotElement
-                        , rotateO (4 * pi / 3) dotElement
-                        ]
+            AnimatedDrawing
+                . translate v
+                . D.composite
+                $ [ dotElement
+                  , rotateO (2 * pi / 3) dotElement
+                  , rotateO (4 * pi / 3) dotElement
+                  ]
         , viewFrame = defaultViewFrame
         , frameCount = 200
         , framesPerSec = 33
@@ -264,7 +264,7 @@ toroidalProjection r1 r2 (a1, a2) = Point x y
 dots6 :: AnimatedPiece
 dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA [thisGrating <$> hamster, pure dotMatrix]
+    piece = defaultAnimatedPiece $ D.composite [thisGrating <$> hamster, pure dotMatrix]
 
     dotMatrix = D.union $ makeGrid ll ur 7 7 topDot
 
@@ -284,7 +284,7 @@ dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
 dots7 :: AnimatedPiece
 dots7 = piece{viewFrame = originViewFrame, palette = terracotta}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+    piece = defaultAnimatedPiece $ D.composite dots
     dot c p = D.draw c $ D.disc p 5
     wobblingDot c p = translationField (displacementField 7.5) p <*> pure (dot c p)
     dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
@@ -393,12 +393,12 @@ dots11 = piece{palette = lux, viewFrame = originViewFrame}
   where
     piece =
         defaultAnimatedPiece $
-            D.union <$> sequenceA [pure innerFrame, animatedDots, pure outerFrame]
+            D.composite [pure innerFrame, animatedDots, pure outerFrame]
 
     innerFrame = squareFrame 50 75 HighlightA
     outerFrame = squareFrame 100 125 HighlightB
 
-    animatedDots = D.union <$> sequenceA [animatedDot, shiftLater 0.2 animatedDot]
+    animatedDots = D.composite [animatedDot, shiftLater 0.2 animatedDot]
 
     animatedDot = makeCircular 1 $ followPath path origin <*> pure dot
     dot = D.draw Foreground $ D.disc origin 15
@@ -423,7 +423,7 @@ squareFrame s1 s2 c = D.exclude sq1 $ D.draw c sq2
 dots12 :: AnimatedPiece
 dots12 = piece{viewFrame = originViewFrame, palette = calico}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+    piece = defaultAnimatedPiece $ D.composite dots
 
     dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
     ll = Point (-200) (-200)
@@ -511,7 +511,7 @@ quadFrames = D.union [frameA, frameB, frameC, frameD]
 dots16 :: AnimatedPiece
 dots16 = piece{viewFrame = originViewFrame, palette = terracotta}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+    piece = defaultAnimatedPiece $ D.composite dots
     dot c p = D.draw c $ D.disc p 5
     wobblingDot c p = scaleField (dots16Field 0.5) p <*> pure (dot c p)
     dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
@@ -536,7 +536,7 @@ dots16Field a = mkField <$> time
 dots17 :: AnimatedPiece
 dots17 = piece{viewFrame = originViewFrame, palette = desert}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA ([pure leftBoundary, pure rightBoundary] <> dots)
+    piece = defaultAnimatedPiece $ D.composite ([pure leftBoundary, pure rightBoundary] <> dots)
 
     leftBoundary = translate (negateV $ Vector 250 250) . D.draw Foreground $ D.rectangle 50 500
     rightBoundary = translate (Vector 450 0) leftBoundary
@@ -562,7 +562,7 @@ dots17 = piece{viewFrame = originViewFrame, palette = desert}
 dots18 :: AnimatedPiece
 dots18 = piece{viewFrame = originViewFrame, palette = greenroom, frameCount = 200}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA dots
+    piece = defaultAnimatedPiece $ D.composite dots
 
     dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
     ll = Point (-200) (-200)

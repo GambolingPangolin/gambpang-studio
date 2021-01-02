@@ -107,7 +107,7 @@ permutations xs = uncurry mkPermutations =<< zip fronts backs
 pentagon1 :: AnimatedPiece
 pentagon1 =
     AnimatedPiece
-        { source = AnimatedDrawing . resize $ D.union <$> sequenceA [segments, pure underlayer]
+        { source = AnimatedDrawing . resize $ D.composite [segments, pure underlayer]
         , viewFrame = originViewFrame
         , framesPerSec = 50
         , frameCount = 100
@@ -124,7 +124,7 @@ animatePermutation n ts ps = D.union <$> zipWithM (animateTriangle n) ts ps
 
 animateTriangle :: Int -> TriangularSegment -> Int -> Animated (Drawing ColorStyle)
 animateTriangle n t nextPosition =
-    D.union <$> sequenceA [dot, drawTriangle <$> animConcat [slide, reposition]]
+    D.composite [dot, drawTriangle <$> animConcat [slide, reposition]]
   where
     slide = slideTriangleOut t 0.25
     outPosition = valueAtTime 1 slide

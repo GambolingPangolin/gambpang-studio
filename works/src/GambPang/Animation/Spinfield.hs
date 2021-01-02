@@ -33,7 +33,7 @@ animations paletteChoice =
 spinfield1 :: AnimatedPiece
 spinfield1 = piece{palette = redandblack}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA (makeGrid ll ur 6 6 mkSpinner)
+    piece = defaultAnimatedPiece $ D.composite (makeGrid ll ur 6 6 mkSpinner)
     ll = Point 50 50
     ur = Point 450 450
 

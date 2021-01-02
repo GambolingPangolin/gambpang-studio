@@ -66,7 +66,7 @@ import GambPang.Animation.Bitmap (
     pixelPoint,
     unitPixel,
  )
-import GambPang.Animation.Drawing (Drawing, transform)
+import GambPang.Animation.Drawing (Drawing)
 import GambPang.Animation.Field2D (Field2D, point, valueAtPoint)
 import GambPang.Animation.LinearAlgebra (
     AffineTransformation,
@@ -94,7 +94,7 @@ import GambPang.Animation.Render (
  )
 import GambPang.Animation.Rigging (
     Motion,
-    Rigged,
+    Rigged (..),
     cameraPan,
     followPath,
     reflect,

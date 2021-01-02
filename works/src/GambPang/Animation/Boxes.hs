@@ -67,7 +67,6 @@ import GambPang.Animation.Utils (
     originViewFrame,
     scaleField,
     translationField,
-    union2,
  )
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
@@ -91,16 +90,19 @@ animations paletteChoice =
             ]
 
 boxes1 :: AnimatedPiece
-boxes1 = defaultAnimatedPiece . center300 . defaultZoom $ union2 cornerElements <$> travelers
+boxes1 =
+    defaultAnimatedPiece
+        . center300
+        . defaultZoom
+        $ D.composite [pure cornerElements, travelers]
   where
     travelers =
-        D.union
-            <$> sequenceA
-                [ mkTraveler ceLL ceLR
-                , mkTraveler ceLR ceUR
-                , mkTraveler ceUR ceUL
-                , mkTraveler ceUL ceLL
-                ]
+        D.composite
+            [ mkTraveler ceLL ceLR
+            , mkTraveler ceLR ceUR
+            , mkTraveler ceUR ceUL
+            , mkTraveler ceUL ceLL
+            ]
 
     mkTraveler e1 e2 = followPath (travPath e1 e2) travCenter <*> pure traveler
 
@@ -177,7 +179,7 @@ darkRect w h = D.draw Foreground $ D.rectangle w h
 
 -- | Nested boxes where the inner box rotates
 boxes2 :: AnimatedPiece
-boxes2 = defaultAnimatedPiece . center300 $ union2 <$> rotator <*> pure backer
+boxes2 = defaultAnimatedPiece . center300 $ D.composite [rotator, pure backer]
   where
     backer = D.draw HighlightA $ D.rectangle 300 300
 
@@ -192,10 +194,11 @@ boxes2 = defaultAnimatedPiece . center300 $ union2 <$> rotator <*> pure backer
 
 boxes3 :: AnimatedPiece
 boxes3 =
-    defaultAnimatedPiece . center300 . defaultZoom $
-        D.union
-            <$> sequenceA
-                [pure cornerElements, travA, travB, travC, travD]
+    defaultAnimatedPiece
+        . center300
+        . defaultZoom
+        . D.composite
+        $ [pure cornerElements, travA, travB, travC, travD]
   where
     travA = followPath path travCenter <*> pure traveler
     travB = shiftEarlier 0.05 travA
@@ -262,7 +265,7 @@ boxes6 =
         , frameCount = 200
         }
   where
-    piece = defaultAnimatedPiece . shiftLater 1 $ D.union <$> sequenceA travelers
+    piece = defaultAnimatedPiece . shiftLater 1 . D.composite $ travelers
 
     travelerPair =
         [ travelingBox Foreground
@@ -346,12 +349,11 @@ boxes8 = piece{viewFrame = originViewFrame}
     ur = Point 200 200
 
     runners =
-        D.union
-            <$> sequenceA
-                [ runner Foreground
-                , shiftLater 0.33 $ runner HighlightA
-                , shiftLater 0.66 $ runner HighlightB
-                ]
+        D.composite
+            [ runner Foreground
+            , shiftLater 0.33 $ runner HighlightA
+            , shiftLater 0.66 $ runner HighlightB
+            ]
 
     runner c = followPath path origin <*> (rotatingO 1 <*> pure (staticRunner c))
     path = circularPath 1 origin 150
@@ -364,7 +366,7 @@ boxes8 = piece{viewFrame = originViewFrame}
 boxes9 :: AnimatedPiece
 boxes9 = piece{frameCount = 200}
   where
-    piece = defaultAnimatedPiece $ D.union <$> sequenceA (hiBoxes <> dots <> loBoxes)
+    piece = defaultAnimatedPiece $ D.composite (hiBoxes <> dots <> loBoxes)
     (hiBoxes, loBoxes) = (toBoxes *** toBoxes) . partition (even . fst) $ zip [1 :: Int ..] boxes
     toBoxes = fmap (pure . snd)
     boxes = makeGrid ll ur 10 10 $ \_ _ -> box
@@ -393,7 +395,7 @@ boxes9 = piece{frameCount = 200}
 
 -- | In which boxes on a grid flow accourding to a vertical sine wave
 boxes10 :: AnimatedPiece
-boxes10 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
+boxes10 = defaultAnimatedPiece $ D.composite boxes
   where
     mobileBox c p = translationField hWaves p <*> pure (box c p)
 
@@ -418,7 +420,7 @@ boxes10 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
 
 -- | In which boxes on a grid flow accourding to a vertical sine wave
 boxes11 :: AnimatedPiece
-boxes11 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
+boxes11 = defaultAnimatedPiece $ D.composite boxes
   where
     mobileBox c p = scaleField hWaves p <*> pure (box c p)
 
@@ -489,7 +491,7 @@ boxes14 = piece{palette = markets, frameCount = 500}
         | otherwise = id
 
 swapSet :: [(Int, Int)] -> Animated (Drawing ColorStyle)
-swapSet swaps = D.union <$> sequenceA steps
+swapSet swaps = D.composite steps
   where
     boxes pos1 pos2 = compress (fromIntegral cFactor) . crop . applyFlip pos1 pos2 . makeGrid ll ur 10 10 $ mkBox pos1
 

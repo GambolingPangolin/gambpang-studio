@@ -109,7 +109,7 @@ snowfall r s d = followPath fallPath origin <*> pure flake
     p1 = Point 0 $ negate r
 
 snowfield1 :: Animated (Drawing ColorStyle)
-snowfield1 = D.union <$> sequenceA falls
+snowfield1 = D.composite falls
   where
     falls =
         [ mkFall 0.1 50 fallB
