@@ -39,7 +39,7 @@ width :: Rectangle -> Double
 width (Rectangle ll ur) = pointX ur - pointX ll
 
 height :: Rectangle -> Double
-height (Rectangle ll ur) = pointY ur - pointX ll
+height (Rectangle ll ur) = pointY ur - pointY ll
 
 center :: Rectangle -> Point
 center (Rectangle ll ur) = midpoint ll ur

@@ -39,7 +39,9 @@ import GambPang.Animation (
     centeredRectangle,
     circularPath,
     compress,
+    displace,
     followPath,
+    fromWidthHeight,
     makeCircular,
     makeGrid,
     negateV,
@@ -50,6 +52,7 @@ import GambPang.Animation (
     piecewiseLinear,
     point,
     pointToVector,
+    rescale,
     rotateO,
     rotatingO,
     scale,
@@ -117,6 +120,7 @@ animations paletteChoice =
             , ("dots-19", dots19)
             ]
 
+-- | In which a dot orbits the center of the frame
 dots1 :: AnimatedPiece
 dots1 = defaultAnimatedPiece . translate v' $ rotatingO 1 <*> pure s0
   where
@@ -125,62 +129,53 @@ dots1 = defaultAnimatedPiece . translate v' $ rotatingO 1 <*> pure s0
     v = Vector 0 175
     v' = Vector 250 250
 
+-- | In which a large dot transits the boundary of a grid
 dots2 :: AnimatedPiece
-dots2 = defaultAnimatedPiece $ translate v $ union2 <$> movingDot <*> pure field
+dots2 =
+    defaultAnimatedPiece
+        . rescale (centeredRectangle 500 500)
+        $ D.composite [movingDot, pure field]
   where
-    n = 5
-    v = Vector offset offset
-    offset = 50
-    gapSize = 400 / fromIntegral (n - 1)
-    field = dotField gapSize $ uniformDotFieldSpec n 5 Foreground
-
-    union2 x y = D.union [x, y]
+    field = D.union . makeGrid $ Grid gridR 5 5 mkVertex
+    mkVertex _ _ p = D.draw Foreground $ D.disc p 5
+    gridR = centeredRectangle 400 400
 
     movingDot = followPath path origin <*> pure d
 
     d = D.draw HighlightA $ D.disc origin 20
-    path =
-        piecewiseLinear $
-            pathProgram
-                ( Point 0 0
-                    :| [ Point 400 0
-                       , Point 400 400
-                       , Point 0 400
-                       , Point 0 0
-                       ]
-                )
 
-dotField ::
-    -- | Gap
-    Double ->
-    Map (Int, Int) (Double, c) ->
-    Drawing c
-dotField s colors = D.union $ Map.foldlWithKey addDot mempty colors
-  where
-    addDot dots (x, y) (r, c) = D.draw c (D.disc (center x y) r) : dots
-    center x y = Point (s * fromIntegral x) (s * fromIntegral y)
+    p0 = Point (-200) (-200)
+    p1 = displace p0 $ Vector 400 0
+    p2 = displace p1 $ Vector 0 400
+    p3 = displace p2 $ Vector (-400) 0
+    p4 = displace p3 $ Vector 0 (-400)
 
-uniformDotFieldSpec :: Int -> Double -> c -> Map (Int, Int) (Double, c)
-uniformDotFieldSpec n r c =
-    Map.fromList $ [((x, y), (r, c)) | x <- [0 .. n - 1], y <- [0 .. n - 1]]
+    path = piecewiseLinear $ pathProgram (p0 :| [p1, p2, p3, p4])
 
+-- | In which dots travel a sinusoidal path
 dots3 :: AnimatedPiece
-dots3 = defaultAnimatedPiece . translate v . fmap D.union $ traverse mkDot [0 .. 10]
+dots3 =
+    defaultAnimatedPiece
+        . rescale thisFrame
+        . fmap D.union
+        $ traverse mkDot [0 .. 10]
   where
     mkDot i = shiftEarlier (i / 10) dot
-    dot = followPath (sinPath <$> time) p0 <*> pure d
-    sinPath t = let s = toCircular t in Point (500 * s) (200 * sin (2 * pi * s))
-    v = Vector 0 250
-    d = D.draw Foreground $ D.disc origin 10
-    p0 = origin
-    toCircular = snd . properFraction @_ @Int
 
+    dot = followPath path origin <*> pure d
+    path = makeCircular 1 $ sinPath <$> time
+    sinPath t = Point (500 * t) (200 * sin (2 * pi * t))
+
+    d = D.draw Foreground $ D.disc origin 10
+    thisFrame = fromWidthHeight (Point 0 (-250)) 500 500
+
+-- | In which a trio of dots slows and reverses
 dots4 :: AnimatedPiece
 dots4 =
     AnimatedPiece
         { source =
             AnimatedDrawing
-                . translate v
+                . rescale thisFrame
                 . D.composite
                 $ [ dotElement
                   , rotateO (2 * pi / 3) dotElement
@@ -199,8 +194,8 @@ dots4 =
         | otherwise = negate $ 2 * m * progress (2 * t - 1)
     progress t = sin (pi * t)
     pCenter = Point 100 0
-    v = Vector 250 250
     m = 2
+    thisFrame = centeredRectangle 500 500
 
 -- | In which dots coil around an annulus
 dots5 :: AnimatedPiece
@@ -220,7 +215,8 @@ dots5 = piece{viewFrame = originViewFrame, frameCount = 500}
     rInnerPath = rInner - rCoiler - 5
     rOuterPath = rOuter + rCoiler + 5
 
-    coilingDot = followPath (toroidalPath rInnerPath rOuterPath verticalWindingNumber 1) origin <*> pure coiler
+    coilingDot = followPath path origin <*> pure coiler
+    path = toroidalPath rInnerPath rOuterPath verticalWindingNumber 1
     isAboveAnnulus t = sin (2 * pi * verticalWindingNumber * t) > 0
 
     verticalWindingNumber = 5
@@ -261,7 +257,7 @@ toroidalProjection r1 r2 (a1, a2) = Point x y
     r = r1 + (r2 - r1) * u
     u = (1 + cos a2) / 2
 
--- In which dots move under a grating
+-- | In which dots move under a grating
 dots6 :: AnimatedPiece
 dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
   where
