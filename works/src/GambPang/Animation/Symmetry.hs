@@ -133,7 +133,7 @@ animateTriangle n t nextPosition =
 
     dot = followPath dotPath origin <*> pure (D.draw HighlightB $ D.disc origin 10)
     dotPath =
-        piecewiseLinear . pathProgram 1 $
+        piecewiseLinear . pathProgram $
             handlePoint t :| [handlePoint outPosition, handlePoint t]
 
 -- | Move a triangle of the polygon

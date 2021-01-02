@@ -142,7 +142,6 @@ dots2 = defaultAnimatedPiece $ translate v $ union2 <$> movingDot <*> pure field
     path =
         piecewiseLinear $
             pathProgram
-                1
                 ( Point 0 0
                     :| [ Point 400 0
                        , Point 400 400
@@ -473,7 +472,7 @@ dots14 = piece{viewFrame = originViewFrame, frameCount = 200}
     path =
         makeCircular 1
             . piecewiseLinear
-            . pathProgram 1
+            . pathProgram
             $ Point mark 0 :| [Point 0 mark, Point (negate mark) 0, Point 0 (negate mark), Point mark 0]
 
     mark = 160
@@ -487,7 +486,7 @@ dots15 = piece{viewFrame = originViewFrame, frameCount = 200}
     path =
         makeCircular 1
             . piecewiseLinear
-            . pathProgram 1
+            . pathProgram
             $ Point 125 125
                 :| [ Point 125 (-125)
                    , Point (-125) (-125)
@@ -618,5 +617,5 @@ dots19 = piece{palette = markets, frameCount = 200}
     dotPath =
         makeCircular 1
             . piecewiseLinear
-            . pathProgram 1
+            . pathProgram
             $ Point 0 0 :| [Point 500 500]

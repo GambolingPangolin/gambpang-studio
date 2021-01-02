@@ -34,15 +34,16 @@ makeCircular t = timeControl toInterval
   where
     toInterval s = let q = floor @_ @Int $ s / t in s - fromIntegral q
 
-pathProgram :: Time -> NonEmpty Point -> PiecewiseLinearPath
-pathProgram _ (p :| []) = PiecewiseLinearPath{plpStartingPoint = p, plpSegments = mempty}
-pathProgram t ps@(_ :| (p : ps')) = mkPLP $ normalizeTime <$> pointPairs
+-- | The resulting program takes unit time
+pathProgram :: NonEmpty Point -> PiecewiseLinearPath
+pathProgram (p :| []) = PiecewiseLinearPath{plpStartingPoint = p, plpSegments = mempty}
+pathProgram ps@(_ :| (p : ps')) = mkPLP $ normalizeTime <$> pointPairs
   where
     pointPairs = NE.zipWith mkSegment ps (p :| ps')
     mkSegment p1 p2 = (dist p1 p2, p1, p2)
     totalTime = sum $ getTime <$> pointPairs
     getTime (t', _, _) = t'
-    normalizeTime (t', p1, p2) = (t' * t / totalTime, p1, p2)
+    normalizeTime (t', p1, p2) = (t' / totalTime, p1, p2)
     dist p1 = norm . displacement p1
     mkPLP ((t', p1, p2) :| pts) =
         PiecewiseLinearPath

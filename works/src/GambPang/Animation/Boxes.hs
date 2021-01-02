@@ -31,7 +31,6 @@ import GambPang.Animation (
     Grid (..),
     Point (..),
     Rigged (..),
-    Time,
     Vector (..),
     cameraPan,
     centeredRectangle,
@@ -110,7 +109,7 @@ boxes1 =
     mkTraveler e1 e2 = followPath (travPath e1 e2) travCenter <*> pure traveler
 
     travPath e1 e2 =
-        piecewiseLinear $ pathProgram 1 (cornerElemPointA e1 :| [cornerElemPointB e2])
+        piecewiseLinear $ pathProgram (cornerElemPointA e1 :| [cornerElemPointB e2])
 
 cornerElements :: Drawing ColorStyle
 cornerElements = D.union $ cornerElemDrawing <$> [ceLL, ceLR, ceUR, ceUL]
@@ -210,7 +209,7 @@ boxes3 =
     path =
         makeCircular 1
             . piecewiseLinear
-            . pathProgram 1
+            . pathProgram
             $ cornerElemCorner ceLL
                 :| [ cornerElemCorner ceLR
                    , cornerElemCorner ceUR
@@ -292,7 +291,7 @@ boxes6 =
     box color = scaling <*> (pure . translate v0 . D.draw color) (D.rectangle sideSmall sideSmall)
     v0 = negateV $ Vector (0.5 * sideSmall) (0.5 * sideSmall)
 
-    path = piecewiseLinear . pathProgram duration $ startingPosition :| [endingPosition]
+    path = piecewiseLinear . pathProgram $ startingPosition :| [endingPosition]
     scaling = scale . mkScale <$> time
 
     mkScale t
@@ -303,9 +302,6 @@ boxes6 =
 
 interp :: Num a => a -> a -> a -> a
 interp u a b = (1 - u) * a + u * b
-
-duration :: Time
-duration = 1
 
 -- | In which we scroll along a spinning-box field
 boxes7 :: AnimatedPiece
@@ -337,7 +333,7 @@ boxes7 =
     v = negateV $ Vector (15 / 2) (15 / 2)
 
     cameraPath =
-        piecewiseLinear . pathProgram duration $
+        piecewiseLinear . pathProgram $
             origin :| [Point (10 * 30) (5 * 30)]
 
 -- | In which we see a dot under a grating of squares
@@ -389,7 +385,7 @@ boxes9 = piece{frameCount = 200}
     path =
         makeCircular 1
             . piecewiseLinear
-            . pathProgram 1
+            . pathProgram
             . fmap (translate $ Vector 25 25)
             $ Point 0 100 :| [Point 100 450, Point 450 350, Point 350 0, Point 0 100]
 
