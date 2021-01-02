@@ -48,6 +48,7 @@ import GambPang.Animation (
     point,
     pointToVector,
     rotateO,
+    rotatingO,
     scale,
     shiftEarlier,
     shiftLater,
@@ -83,7 +84,6 @@ import GambPang.Animation.Utils (
     grating,
     makeGrid,
     originViewFrame,
-    rotating,
     scaleField,
     translationField,
     unitBump,
@@ -116,7 +116,7 @@ animations paletteChoice =
             ]
 
 dots1 :: AnimatedPiece
-dots1 = defaultAnimatedPiece . translate v' $ rotating 1 <*> pure s0
+dots1 = defaultAnimatedPiece . translate v' $ rotatingO 1 <*> pure s0
   where
     d = D.draw Foreground $ D.disc origin 10
     s0 = translate v d
@@ -372,7 +372,7 @@ dots10 = piece{viewFrame = originViewFrame, palette = californiacoast}
 
     dots i = D.union $ dot (getColor i) . getPoint (getR i) <$> getAngles i
     dot c p = D.draw c $ D.disc p 10
-    ring i = rotating (getRate i) <*> pure (dots i)
+    ring i = rotatingO (getRate i) <*> pure (dots i)
 
     getRate i = 1 / fromIntegral (getCount i)
     getAngles i =

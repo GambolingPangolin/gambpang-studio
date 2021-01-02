@@ -21,6 +21,7 @@ import GambPang.Animation (
     piecewiseLinear,
     reflect,
     rotateO,
+    rotatingO,
     scale,
     shiftLater,
     translate,
@@ -30,7 +31,7 @@ import qualified GambPang.Animation.Drawing as D
 
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, snowy)
 import GambPang.Animation.Piece (AnimatedPiece (palette), applyPaletteChoice)
-import GambPang.Animation.Utils (rotating, translations)
+import GambPang.Animation.Utils (translations)
 import qualified GambPang.Animation.Utils as U
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
@@ -60,7 +61,7 @@ toSnowflake d = D.union $ mkSnowflake <$> [0 .. 2 :: Int]
     maskedDrawing = snowflakeMask d
 
 animatedSnowflake :: Foldable t => t Shape -> Animated (Drawing ColorStyle)
-animatedSnowflake cuts = scaleAndCenter <$> (rotating 1 <*> pure snowflake)
+animatedSnowflake cuts = scaleAndCenter <$> (rotatingO 1 <*> pure snowflake)
   where
     snowflake = toSnowflake . applyCuts . D.draw Foreground $ D.disc origin 1
     applyCuts = appEndo $ foldMap (Endo . D.exclude) cuts

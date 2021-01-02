@@ -2,19 +2,23 @@ module GambPang.Animation.Rigging (
     Rigged (..),
     Motion,
     translate,
+    translating,
     rotateO,
     rotate,
     scale,
+    scaling,
     scaleXY,
     reflect,
     followPath,
     cameraPan,
+    rotatingO,
+    rotating,
 ) where
 
 import GambPang.Animation.LinearAlgebra (
     AffineTransformation,
     Point,
-    Vector,
+    Vector (..),
     applyAffineT,
     applyAffineTV,
     displacement,
@@ -22,11 +26,11 @@ import GambPang.Animation.LinearAlgebra (
     pointToVector,
     reflection,
     rotation,
-    scaling,
     translation,
  )
+import qualified GambPang.Animation.LinearAlgebra as LA
 import GambPang.Animation.Path (Path)
-import GambPang.Animation.Scene (Animated)
+import GambPang.Animation.Scene (Animated, time)
 
 class Rigged a where
     transform :: AffineTransformation -> a -> a
@@ -58,7 +62,7 @@ scaleXY ::
     Double ->
     a ->
     a
-scaleXY sx sy = transform $ scaling sx sy
+scaleXY sx sy = transform $ LA.scaling sx sy
 
 scale :: Rigged a => Double -> a -> a
 scale a = scaleXY a a
@@ -89,3 +93,43 @@ cameraPan :: Rigged a => Path -> Animated a -> Animated a
 cameraPan path scene = translate <$> pathV <*> scene
   where
     pathV = negateV . pointToVector <$> path
+
+translating ::
+    Rigged a =>
+    -- | Rate of translation
+    Double ->
+    -- | Direction of translation
+    Vector ->
+    Motion a
+translating r (Vector dx dy) = tr <$> time
+  where
+    tr t = translate (dv t)
+    dv t = Vector (t * r * dx) (t * r * dy)
+
+-- | Rotate about the origin
+rotatingO ::
+    Rigged a =>
+    -- | Rate of rotation
+    Double ->
+    Motion a
+rotatingO r = rot <$> time
+  where
+    rot t = rotateO (2 * r * t * pi)
+
+rotating ::
+    Rigged a =>
+    -- | Center of rotation
+    Point ->
+    -- | Rate of rotation
+    Double ->
+    Motion a
+rotating p r = rot <$> time
+  where
+    rot t = rotate p (2 * r * t * pi)
+
+scaling ::
+    Rigged a =>
+    -- | Rate of scaling
+    Double ->
+    Motion a
+scaling r = scale . (r *) <$> time

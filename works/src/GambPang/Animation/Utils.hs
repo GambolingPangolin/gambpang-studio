@@ -1,13 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module GambPang.Animation.Utils (
-    rotating,
-    translations,
     union2,
     dataUrl,
     defaultViewFrame,
     originViewFrame,
     defaultAnimatedPiece,
+    translations,
     makeGrid,
     grating,
     translationField,
@@ -16,7 +15,6 @@ module GambPang.Animation.Utils (
     unitBump,
     Pointed (..),
     midpoint,
-    rotatingP,
 ) where
 
 import Data.ByteString (ByteString)
@@ -37,10 +35,7 @@ import GambPang.Animation (
     normalize,
     point,
     pointToVector,
-    rotate,
-    rotateO,
     scale,
-    time,
     translate,
     valueAtPoint,
  )
@@ -68,20 +63,6 @@ originViewFrame = defaultViewFrame{lowerLeft = (-250, -250)}
 
 union2 :: Drawing color -> Drawing color -> Drawing color
 union2 x y = D.union [x, y]
-
-rotating ::
-    Rigged a =>
-    -- | Rate of rotation
-    Double ->
-    Motion a
-rotating r = rot <$> time
-  where
-    rot t = rotateO (2 * r * t * pi)
-
-rotatingP :: Rigged a => Point -> Double -> Motion a
-rotatingP p r = rot <$> time
-  where
-    rot t = rotate p (2 * r * t * pi)
 
 translations :: (Functor f, Rigged b) => b -> f Vector -> f b
 translations s = fmap (`translate` s)

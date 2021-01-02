@@ -45,6 +45,8 @@ import GambPang.Animation (
     point,
     pointToVector,
     rotateO,
+    rotating,
+    rotatingO,
     scale,
     shiftEarlier,
     shiftLater,
@@ -63,8 +65,6 @@ import GambPang.Animation.Utils (
     makeGrid,
     midpoint,
     originViewFrame,
-    rotating,
-    rotatingP,
     scaleField,
     translationField,
     union2,
@@ -234,7 +234,7 @@ fastRegion inRegion = D.union <$> traverse spinner spinCoords
   where
     spinCoords = [(i, j) | i <- [1 .. 20 :: Int], j <- [1 .. 20 :: Int]]
     spinner (i, j) =
-        fmap (translate $ toVector i j) $ rotating (rate $ toVector i j) <*> pure (sprite i j)
+        fmap (translate $ toVector i j) $ rotatingO (rate $ toVector i j) <*> pure (sprite i j)
 
     sprite i j = translate spriteCenterV . D.draw (getColor i j) $ D.rectangle 15 15
     spriteCenterV = negateV $ Vector (15 / 2) (15 / 2)
@@ -326,7 +326,7 @@ boxes7 =
     n = 16 :: Int
     range z = let i0 = floor (z / 30) in [i0 - 1 .. i0 + n + 1]
 
-    spinner r c p = translate (pointToVector p) $ rotating r <*> pure (box c)
+    spinner r c p = translate (pointToVector p) $ rotatingO r <*> pure (box c)
     box c = translate v . D.draw c $ D.rectangle 15 15
     v = negateV $ Vector (15 / 2) (15 / 2)
 
@@ -353,7 +353,7 @@ boxes8 = piece{viewFrame = originViewFrame}
                 , shiftLater 0.66 $ runner HighlightB
                 ]
 
-    runner c = followPath path origin <*> (rotating 1 <*> pure (staticRunner c))
+    runner c = followPath path origin <*> (rotatingO 1 <*> pure (staticRunner c))
     path = circularPath 1 origin 150
     staticRunner c =
         D.union
@@ -449,7 +449,7 @@ rectP w h =
         }
 
 swapPointed :: Rigged a => Pointed a -> Pointed a -> Animated (Pointed a, Pointed a)
-swapPointed p1 p2 = rotatingP mp 0.5 <*> pure (p1, p2)
+swapPointed p1 p2 = rotating mp 0.5 <*> pure (p1, p2)
   where
     mp = midpoint (basePoint p1) (basePoint p2)
 

@@ -13,13 +13,14 @@ import GambPang.Animation (
     Vector (Vector),
     origin,
     pointToVector,
+    rotatingO,
     translate,
  )
 import qualified GambPang.Animation.Drawing as D
 
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, redandblack)
 import GambPang.Animation.Piece (AnimatedPiece (palette), applyPaletteChoice)
-import GambPang.Animation.Utils (defaultAnimatedPiece, makeGrid, rotating)
+import GambPang.Animation.Utils (defaultAnimatedPiece, makeGrid)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -43,7 +44,7 @@ spinfield1 = piece{palette = redandblack}
     fastSpinner p = spinner p 2
     slowSpinner p = spinner p 1
 
-    spinner p r = translate (pointToVector p) $ rotating r <*> pure staticSpinner
+    spinner p r = translate (pointToVector p) $ rotatingO r <*> pure staticSpinner
 
     staticSpinner =
         D.union

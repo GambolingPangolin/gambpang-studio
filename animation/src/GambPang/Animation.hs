@@ -17,10 +17,14 @@ module GambPang.Animation (
     AffineTransformation,
     Rigged (..),
     translate,
+    translating,
     rotateO,
+    rotatingO,
     rotate,
+    rotating,
     reflect,
     scale,
+    scaling,
     scaleXY,
 
     -- * Animation
@@ -56,11 +60,63 @@ module GambPang.Animation (
     renderAnimDrawing,
 ) where
 
-import GambPang.Animation.Bitmap
-import GambPang.Animation.Drawing
-import GambPang.Animation.Field2D
-import GambPang.Animation.LinearAlgebra
-import GambPang.Animation.Path
-import GambPang.Animation.Render
-import GambPang.Animation.Rigging
-import GambPang.Animation.Scene
+import GambPang.Animation.Bitmap (
+    ViewFrame (..),
+    colorPixel,
+    pixelPoint,
+    unitPixel,
+ )
+import GambPang.Animation.Drawing (Drawing, transform)
+import GambPang.Animation.Field2D (Field2D, point, valueAtPoint)
+import GambPang.Animation.LinearAlgebra (
+    AffineTransformation,
+    Point (..),
+    Vector (..),
+    displacement,
+    negateV,
+    norm,
+    normalize,
+    origin,
+    pointToVector,
+ )
+import GambPang.Animation.Path (
+    Path,
+    PiecewiseLinearPath (..),
+    circularPath,
+    makeCircular,
+    pathProgram,
+    piecewiseLinear,
+ )
+import GambPang.Animation.Render (
+    exportGif,
+    renderAnimDrawing,
+    renderAnimField2D,
+ )
+import GambPang.Animation.Rigging (
+    Motion,
+    Rigged,
+    cameraPan,
+    followPath,
+    reflect,
+    rotate,
+    rotateO,
+    rotating,
+    rotatingO,
+    scale,
+    scaleXY,
+    scaling,
+    translate,
+    translating,
+ )
+import GambPang.Animation.Scene (
+    Animated,
+    Time,
+    backwards,
+    compress,
+    expand,
+    shiftEarlier,
+    shiftLater,
+    time,
+    timeControl,
+    valueAtTime,
+ )
