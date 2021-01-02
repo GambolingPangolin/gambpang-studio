@@ -6,7 +6,6 @@ module GambPang.Animation.Utils (
     originViewFrame,
     defaultAnimatedPiece,
     translations,
-    makeGrid,
     grating,
     translationField,
     scaleField,
@@ -24,11 +23,14 @@ import qualified Data.Text as Text
 import GambPang.Animation (
     Animated,
     Drawing,
+    Grid (..),
     Motion,
     Point (..),
+    Rectangle,
     Rigged (..),
     Vector (..),
     ViewFrame (..),
+    makeGrid,
     negateV,
     norm,
     normalize,
@@ -78,42 +80,14 @@ defaultAnimatedPiece anim =
         , palette = mellow
         }
 
-makeGrid ::
-    Rigged b =>
-    Point ->
-    Point ->
-    Int ->
-    Int ->
-    (Int -> Int -> Point -> b) ->
-    [b]
-makeGrid ll ur n m mkObject
-    | n >= 2 && m >= 2 = objectGrid
-    | otherwise = error "makeGrid"
-  where
-    objectGrid = [mkObject i j (mkLocation ll ur n m i j) | i <- [1 .. n], j <- [1 .. m]]
-
-mkLocation :: Point -> Point -> Int -> Int -> Int -> Int -> Point
-mkLocation ll ur n m i j =
-    Point
-        { pointX = llx + (fromIntegral i - 1) * hSep
-        , pointY = lly + (fromIntegral j - 1) * vSep
-        }
-  where
-    Point llx lly = ll
-    Point urx ury = ur
-
-    hSep = (urx - llx) / (fromIntegral n - 1)
-    vSep = (ury - lly) / (fromIntegral m - 1)
-
 grating ::
-    Point ->
-    Point ->
+    Rectangle ->
     Int ->
     Int ->
     Shape ->
     Drawing color ->
     Drawing color
-grating ll ur n m s a = D.union $ makeGrid ll ur n m applyMask
+grating r n m s a = D.union . makeGrid $ Grid r n m applyMask
   where
     applyMask _ _ p = D.mask (makeMask p) a
     makeMask p = translate (pointToVector p) s

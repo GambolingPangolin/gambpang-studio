@@ -16,7 +16,9 @@ library
   exposed-modules:
     GambPang.Animation
     GambPang.Animation.Drawing
+    GambPang.Animation.Drawing.Grid
     GambPang.Animation.Field2D
+    GambPang.Animation.Rectangle
 
   other-modules:
     GambPang.Animation.Bitmap

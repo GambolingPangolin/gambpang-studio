@@ -28,15 +28,19 @@ import Data.Text (Text)
 import GambPang.Animation (
     Animated,
     Drawing,
+    Grid (..),
     Point (..),
     Rigged (..),
     Time,
     Vector (..),
     cameraPan,
+    centeredRectangle,
     circularPath,
     compress,
     followPath,
+    fromWidthHeight,
     makeCircular,
+    makeGrid,
     negateV,
     norm,
     origin,
@@ -62,7 +66,6 @@ import GambPang.Animation.Utils (
     Pointed (..),
     defaultAnimatedPiece,
     grating,
-    makeGrid,
     midpoint,
     originViewFrame,
     scaleField,
@@ -342,11 +345,9 @@ boxes8 :: AnimatedPiece
 boxes8 = piece{viewFrame = originViewFrame}
   where
     piece = defaultAnimatedPiece $ thisGrating <$> runners
-    thisGrating = grating ll ur 7 7 rect
+    thisGrating = grating gridR 7 7 rect
     rect = translate (negateV $ Vector 20 20) $ D.rectangle 40 40
-
-    ll = Point (-200) (-200)
-    ur = Point 200 200
+    gridR = centeredRectangle 400 400
 
     runners =
         D.composite
@@ -369,15 +370,14 @@ boxes9 = piece{frameCount = 200}
     piece = defaultAnimatedPiece $ D.composite (hiBoxes <> dots <> loBoxes)
     (hiBoxes, loBoxes) = (toBoxes *** toBoxes) . partition (even . fst) $ zip [1 :: Int ..] boxes
     toBoxes = fmap (pure . snd)
-    boxes = makeGrid ll ur 10 10 $ \_ _ -> box
+    boxes = makeGrid . Grid gridR 10 10 $ \_ _ -> box
     box p =
         translate (pointToVector p)
             . translate (negateV $ Vector 15 15)
             . D.draw Foreground
             $ D.rectangle 30 30
 
-    ll = Point 50 50
-    ur = Point 450 450
+    gridR = fromWidthHeight (Point 50 50) 400 400
 
     dots =
         [ dot HighlightA
@@ -404,7 +404,7 @@ boxes10 = defaultAnimatedPiece $ D.composite boxes
     hWaveValue t (Point _ y) = let v = a * sin (y / 400 + 2 * pi * t) in Vector v (negate v)
     a = 15
 
-    boxes = makeGrid ll ur 10 10 $ \i j -> mobileBox (getColor i j)
+    boxes = makeGrid . Grid gridR 10 10 $ \i j -> mobileBox (getColor i j)
     box c p =
         translate (pointToVector p)
             . translate (negateV $ Vector 15 15)
@@ -415,8 +415,7 @@ boxes10 = defaultAnimatedPiece $ D.composite boxes
         | (i + j) `mod` 3 == 1 = HighlightA
         | otherwise = HighlightB
 
-    ll = Point 50 50
-    ur = Point 450 450
+    gridR = fromWidthHeight (Point 50 50) 400 400
 
 -- | In which boxes on a grid flow accourding to a vertical sine wave
 boxes11 :: AnimatedPiece
@@ -429,7 +428,7 @@ boxes11 = defaultAnimatedPiece $ D.composite boxes
     hWaveValue t (Point _ y) = a * sin (y / 400 + 2 * pi * t)
     a = 15
 
-    boxes = makeGrid ll ur 10 10 $ \i j -> mobileBox (getColor i j)
+    boxes = makeGrid . Grid gridR 10 10 $ \i j -> mobileBox (getColor i j)
     box c p =
         translate (pointToVector p)
             . translate (negateV $ Vector 15 15)
@@ -440,8 +439,7 @@ boxes11 = defaultAnimatedPiece $ D.composite boxes
         | (i + j) `mod` 3 == 1 = HighlightA
         | otherwise = HighlightB
 
-    ll = Point 50 50
-    ur = Point 450 450
+    gridR = fromWidthHeight (Point 50 50) 400 400
 
 rectP :: Double -> Double -> Pointed Shape
 rectP w h =
@@ -493,7 +491,13 @@ boxes14 = piece{palette = markets, frameCount = 500}
 swapSet :: [(Int, Int)] -> Animated (Drawing ColorStyle)
 swapSet swaps = D.composite steps
   where
-    boxes pos1 pos2 = compress (fromIntegral cFactor) . crop . applyFlip pos1 pos2 . makeGrid ll ur 10 10 $ mkBox pos1
+    boxes pos1 pos2 =
+        compress (fromIntegral cFactor)
+            . crop
+            . applyFlip pos1 pos2
+            . makeGrid
+            $ Grid gridR 10 10 (mkBox pos1)
+    gridR = fromWidthHeight (Point 50 50) 400 400
 
     cFactor = length swaps
 
@@ -517,9 +521,6 @@ swapSet swaps = D.composite steps
     getColor (i0, j0) i j
         | i == i0 && j == j0 = HighlightA
         | otherwise = Foreground
-
-    ll = Point 50 50
-    ur = Point 450 450
 
 applyFlip :: (Int, Int) -> (Int, Int) -> [FlipBox] -> Animated (Drawing ColorStyle)
 applyFlip pos1 pos2 bs = combine <$> swapPointed (flipBox b1) (flipBox b2)

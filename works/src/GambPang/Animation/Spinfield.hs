@@ -9,8 +9,11 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
+    Grid (..),
     Point (Point),
     Vector (Vector),
+    fromWidthHeight,
+    makeGrid,
     origin,
     pointToVector,
     rotatingO,
@@ -20,7 +23,7 @@ import qualified GambPang.Animation.Drawing as D
 
 import GambPang.Animation.ColorStyle (ColorStyle (..), PaletteChoice, redandblack)
 import GambPang.Animation.Piece (AnimatedPiece (palette), applyPaletteChoice)
-import GambPang.Animation.Utils (defaultAnimatedPiece, makeGrid)
+import GambPang.Animation.Utils (defaultAnimatedPiece)
 
 animations :: PaletteChoice -> Map Text AnimatedPiece
 animations paletteChoice =
@@ -33,9 +36,8 @@ animations paletteChoice =
 spinfield1 :: AnimatedPiece
 spinfield1 = piece{palette = redandblack}
   where
-    piece = defaultAnimatedPiece $ D.composite (makeGrid ll ur 6 6 mkSpinner)
-    ll = Point 50 50
-    ur = Point 450 450
+    piece = defaultAnimatedPiece . D.composite . makeGrid $ Grid gridR 6 6 mkSpinner
+    gridR = fromWidthHeight (Point 50 50) 400 400
 
     mkSpinner i j
         | test i j = fastSpinner

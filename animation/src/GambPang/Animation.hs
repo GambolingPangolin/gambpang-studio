@@ -1,5 +1,6 @@
 module GambPang.Animation (
-    -- * Scene construction
+    -- * Drafting
+    Drawing,
     Point (..),
     origin,
     Vector (..),
@@ -11,7 +12,11 @@ module GambPang.Animation (
     Field2D,
     point,
     valueAtPoint,
-    Drawing,
+    Rectangle,
+    centeredRectangle,
+    fromWidthHeight,
+    Grid (..),
+    makeGrid,
 
     -- * Rigging and transformation
     AffineTransformation,
@@ -67,6 +72,7 @@ import GambPang.Animation.Bitmap (
     unitPixel,
  )
 import GambPang.Animation.Drawing (Drawing)
+import GambPang.Animation.Drawing.Grid (Grid (..), makeGrid)
 import GambPang.Animation.Field2D (Field2D, point, valueAtPoint)
 import GambPang.Animation.LinearAlgebra (
     AffineTransformation,
@@ -86,6 +92,11 @@ import GambPang.Animation.Path (
     makeCircular,
     pathProgram,
     piecewiseLinear,
+ )
+import GambPang.Animation.Rectangle (
+    Rectangle,
+    centeredRectangle,
+    fromWidthHeight,
  )
 import GambPang.Animation.Render (
     exportGif,

@@ -31,14 +31,17 @@ import qualified Data.Map as Map
 import Data.Text (Text)
 import GambPang.Animation (
     Animated,
+    Grid (..),
     Path,
     Point (..),
     Vector (..),
     backwards,
+    centeredRectangle,
     circularPath,
     compress,
     followPath,
     makeCircular,
+    makeGrid,
     negateV,
     norm,
     normalize,
@@ -82,7 +85,6 @@ import GambPang.Animation.Utils (
     defaultAnimatedPiece,
     defaultViewFrame,
     grating,
-    makeGrid,
     originViewFrame,
     scaleField,
     translationField,
@@ -266,9 +268,10 @@ dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
   where
     piece = defaultAnimatedPiece $ D.composite [thisGrating <$> hamster, pure dotMatrix]
 
-    dotMatrix = D.union $ makeGrid ll ur 7 7 topDot
+    dotMatrix = D.union . makeGrid $ Grid gridR 7 7 topDot
+    gridR = centeredRectangle 400 400
 
-    thisGrating = grating ll ur 7 7 (D.disc origin 20)
+    thisGrating = grating gridR 7 7 (D.disc origin 20)
     hamster = followPath (circularPath 1 origin 150) origin <*> pure dot
 
     dot = D.draw Foreground $ D.disc origin 80
@@ -277,9 +280,6 @@ dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
         | even (i + j) = HighlightA
         | otherwise = HighlightB
 
-    ll = Point (-200) (-200)
-    ur = Point 200 200
-
 -- | In which dots are displaced by an ocillating field
 dots7 :: AnimatedPiece
 dots7 = piece{viewFrame = originViewFrame, palette = terracotta}
@@ -287,9 +287,8 @@ dots7 = piece{viewFrame = originViewFrame, palette = terracotta}
     piece = defaultAnimatedPiece $ D.composite dots
     dot c p = D.draw c $ D.disc p 5
     wobblingDot c p = translationField (displacementField 7.5) p <*> pure (dot c p)
-    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
-    ll = Point (-200) (-200)
-    ur = Point 200 200
+    dots = makeGrid . Grid gridR 10 10 $ \i j -> wobblingDot (getColor i j)
+    gridR = centeredRectangle 400 400
 
     getColor i j
         | (i + j) `mod` 3 == 0 = Foreground
@@ -425,9 +424,8 @@ dots12 = piece{viewFrame = originViewFrame, palette = calico}
   where
     piece = defaultAnimatedPiece $ D.composite dots
 
-    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
-    ll = Point (-200) (-200)
-    ur = Point 200 200
+    dots = makeGrid . Grid gridR 10 10 $ \i j -> wobblingDot (getColor i j)
+    gridR = centeredRectangle 400 400
 
     wobblingDot c p = translationField movingBumpField p <*> pure (dot c p)
     dot c p = D.draw c $ D.disc p 5
@@ -514,9 +512,8 @@ dots16 = piece{viewFrame = originViewFrame, palette = terracotta}
     piece = defaultAnimatedPiece $ D.composite dots
     dot c p = D.draw c $ D.disc p 5
     wobblingDot c p = scaleField (dots16Field 0.5) p <*> pure (dot c p)
-    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
-    ll = Point (-200) (-200)
-    ur = Point 200 200
+    dots = makeGrid . Grid gridR 10 10 $ \i j -> wobblingDot (getColor i j)
+    gridR = centeredRectangle 400 400
 
     getColor i j
         | (i + j) `mod` 3 == 0 = Foreground
@@ -564,9 +561,8 @@ dots18 = piece{viewFrame = originViewFrame, palette = greenroom, frameCount = 20
   where
     piece = defaultAnimatedPiece $ D.composite dots
 
-    dots = makeGrid ll ur 10 10 $ \i j -> wobblingDot (getColor i j)
-    ll = Point (-200) (-200)
-    ur = Point 200 200
+    dots = makeGrid . Grid gridR 10 10 $ \i j -> wobblingDot (getColor i j)
+    gridR = centeredRectangle 400 400
 
     wobblingDot c p = scaleField movingBumpField p <*> pure (dot c p)
     dot c p = D.draw c $ D.disc p 5
