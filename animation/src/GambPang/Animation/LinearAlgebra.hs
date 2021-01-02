@@ -20,6 +20,7 @@ module GambPang.Animation.LinearAlgebra (
     reflection,
     applyAffineT,
     applyAffineTV,
+    midpoint,
 ) where
 
 import GambPang.Animation.Utils (power)
@@ -29,6 +30,12 @@ data Point = Point {pointX :: !Double, pointY :: !Double}
 
 origin :: Point
 origin = Point 0 0
+
+midpoint :: Point -> Point -> Point
+midpoint (Point x1 y1) (Point x2 y2) = Point mx my
+  where
+    mx = (x1 + x2) / 2
+    my = (y1 + y2) / 2
 
 pointToVector :: Point -> Vector
 pointToVector = Vector <$> pointX <*> pointY

@@ -12,7 +12,6 @@ module GambPang.Animation.Utils (
     unitField,
     unitBump,
     Pointed (..),
-    midpoint,
 ) where
 
 import Data.ByteString (ByteString)
@@ -140,9 +139,3 @@ instance Rigged a => Rigged (Pointed a) where
             { basePoint = transform t bp
             , object = transform t o
             }
-
-midpoint :: Point -> Point -> Point
-midpoint (Point x1 y1) (Point x2 y2) = Point mx my
-  where
-    mx = (x1 + x2) / 2
-    my = (y1 + y2) / 2

@@ -30,7 +30,8 @@ import GambPang.Animation.LinearAlgebra (
  )
 import qualified GambPang.Animation.LinearAlgebra as LA
 import GambPang.Animation.Path (Path)
-import GambPang.Animation.Time (Animated, time)
+import GambPang.Animation.Rectangle (Rectangle (..))
+import GambPang.Animation.Animated (Animated, time)
 
 class Rigged a where
     transform :: AffineTransformation -> a -> a
@@ -40,6 +41,13 @@ instance Rigged a => Rigged (Animated a) where
 
 instance (Rigged a, Rigged b) => Rigged (a, b) where
     transform a (x, y) = (transform a x, transform a y)
+
+instance Rigged Rectangle where
+    transform t r =
+        Rectangle
+            { lowerLeft = transform t $ lowerLeft r
+            , upperRight = transform t $ upperRight r
+            }
 
 translate :: Rigged a => Vector -> a -> a
 translate = transform . translation

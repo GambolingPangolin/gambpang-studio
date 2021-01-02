@@ -21,13 +21,13 @@ library
     GambPang.Animation.Rectangle
 
   other-modules:
+    GambPang.Animation.Animated
     GambPang.Animation.Bitmap
     GambPang.Animation.Drawing.Internal
     GambPang.Animation.LinearAlgebra
     GambPang.Animation.Path
     GambPang.Animation.Render
     GambPang.Animation.Rigging
-    GambPang.Animation.Time
     GambPang.Animation.Utils
 
   build-depends:

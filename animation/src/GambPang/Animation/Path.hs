@@ -18,7 +18,7 @@ import GambPang.Animation.LinearAlgebra (
     displacement,
     norm,
  )
-import GambPang.Animation.Time (Animated, Time, time, timeControl)
+import GambPang.Animation.Animated (Animated, Time, time, timeControl)
 
 type Path = Animated Point
 

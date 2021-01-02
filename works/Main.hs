@@ -33,7 +33,6 @@ import qualified GambPang.Animation.Piece as P
 import qualified GambPang.Animation.Scrollers as Scr
 import qualified GambPang.Animation.Snowflake as Snowflake
 import qualified GambPang.Animation.Spinfield as Spinfield
-import qualified GambPang.Animation.Symmetry as Symmetry
 import GambPang.Animation.Vignette (Vignette, heavyFontUrl, lightFontUrl)
 import qualified GambPang.Animation.Vignette as V
 import Paths_gambpang_studio_works (getDataFileName)
@@ -169,5 +168,4 @@ mkAnimations paletteChoice =
         , Boxes.animations
         , Snowflake.animations
         , Spinfield.animations
-        , Symmetry.animations
         ]

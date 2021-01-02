@@ -31,7 +31,6 @@ import GambPang.Animation (
     shiftEarlier,
     time,
     translate,
-    valueAtTime,
  )
 import qualified GambPang.Animation.Drawing as D
 
@@ -91,8 +90,8 @@ bars2 =
         , shiftEarlier 0.33 rotatingMask
         , shiftEarlier 0.66 rotatingMask
         ]
-    rotatingMask = D.mask <$> (circleMask <$> time) <*> pure (stripes 20 500)
-    circleMask t = D.disc (valueAtTime t path) 50
+    rotatingMask = D.mask <$> (circleMask <$> path) <*> pure (stripes 20 500)
+    circleMask p = D.disc p 50
     path = circularPath 1 (Point 250 250) 100
 
 bars3 :: AnimatedPiece

@@ -29,18 +29,19 @@ import qualified Data.Map.Merge.Strict as Map
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
+import GambPang.Animation.Animated (
+    Animated,
+    Time,
+    getStill,
+ )
 import GambPang.Animation.Bitmap (
     ViewFrame (..),
     colorPixel,
     pixelPoint,
+    viewRectangle,
  )
 import GambPang.Animation.Drawing.Internal (Drawing, mapColor, renderDrawing)
 import GambPang.Animation.Field2D (Field2D, valueAtPoint)
-import GambPang.Animation.Time (
-    Animated,
-    Time,
-    valueAtTime,
- )
 
 exportGif :: FilePath -> Int -> [Image PixelRGBA8] -> IO ()
 exportGif outPath delay =
@@ -59,7 +60,7 @@ renderAnimField2D ::
 renderAnimField2D n vf a = genImage <$> timeSamples vf n
   where
     genImage t = generateImage (getFrame t) (viewFrameWidth vf) (viewFrameHeight vf)
-    getFrame t px py = valueAtPoint (getPoint px py) $ valueAtTime t a
+    getFrame t px py = valueAtPoint (getPoint px py) $ getStill (viewRectangle vf) t a
     getPoint px py = pixelPoint (adjustX vf px) (adjustY vf py)
 
 timeSamples :: ViewFrame -> Int -> [Time]
@@ -100,7 +101,10 @@ sampleDrawings ::
     (color1 -> color2) ->
     Animated (Drawing color1) ->
     [Drawing color2]
-sampleDrawings n vf getColor a = (mapColor getColor . (`valueAtTime` a) <$> timeSamples vf n) `using` parList rpar
+sampleDrawings n vf getColor a =
+    (mapColor getColor . getDrawing <$> timeSamples vf n) `using` parList rpar
+  where
+    getDrawing t = getStill (viewRectangle vf) t a
 
 calcImage ::
     ViewFrame ->

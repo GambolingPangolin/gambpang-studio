@@ -3,6 +3,7 @@ module GambPang.Animation (
     Drawing,
     Point (..),
     origin,
+    midpoint,
     Vector (..),
     negateV,
     norm,
@@ -12,9 +13,6 @@ module GambPang.Animation (
     Field2D,
     point,
     valueAtPoint,
-    Rectangle,
-    centeredRectangle,
-    fromWidthHeight,
     Grid (..),
     makeGrid,
 
@@ -33,16 +31,9 @@ module GambPang.Animation (
     scaleXY,
 
     -- * Animation
-    Time,
-    Path,
-    followPath,
-    pathProgram,
-    PiecewiseLinearPath (..),
-    piecewiseLinear,
-    circularPath,
-    makeCircular,
     Animated,
-    valueAtTime,
+    getStill,
+    Time,
     Motion,
     time,
     timeControl,
@@ -52,6 +43,26 @@ module GambPang.Animation (
     shiftEarlier,
     shiftLater,
     cameraPan,
+
+    -- * Framing
+    Rectangle,
+    unitRectangle,
+    centeredRectangle,
+    fromWidthHeight,
+    width,
+    height,
+    center,
+    rescale,
+    unitRescale,
+
+    -- * Paths
+    Path,
+    followPath,
+    pathProgram,
+    PiecewiseLinearPath (..),
+    piecewiseLinear,
+    circularPath,
+    makeCircular,
 
     -- * Bitmap
     pixelPoint,
@@ -65,6 +76,20 @@ module GambPang.Animation (
     renderAnimDrawing,
 ) where
 
+import GambPang.Animation.Animated (
+    Animated,
+    Time,
+    backwards,
+    compress,
+    expand,
+    getStill,
+    rescale,
+    shiftEarlier,
+    shiftLater,
+    time,
+    timeControl,
+    unitRescale,
+ )
 import GambPang.Animation.Bitmap (
     ViewFrame (..),
     colorPixel,
@@ -79,6 +104,7 @@ import GambPang.Animation.LinearAlgebra (
     Point (..),
     Vector (..),
     displacement,
+    midpoint,
     negateV,
     norm,
     normalize,
@@ -95,8 +121,12 @@ import GambPang.Animation.Path (
  )
 import GambPang.Animation.Rectangle (
     Rectangle,
+    center,
     centeredRectangle,
     fromWidthHeight,
+    height,
+    unitRectangle,
+    width,
  )
 import GambPang.Animation.Render (
     exportGif,
@@ -118,16 +148,4 @@ import GambPang.Animation.Rigging (
     scaling,
     translate,
     translating,
- )
-import GambPang.Animation.Time (
-    Animated,
-    Time,
-    backwards,
-    compress,
-    expand,
-    shiftEarlier,
-    shiftLater,
-    time,
-    timeControl,
-    valueAtTime,
  )
