@@ -21,12 +21,13 @@ import GambPang.Animation (
     backwards,
     circularPath,
     followPath,
+    fromWidthHeight,
     makeCircular,
     negateV,
     origin,
     reflect,
+    rescale,
     rotatingO,
-    scale,
     scaleXY,
     shiftEarlier,
     time,
@@ -50,11 +51,11 @@ animations paletteChoice =
             ]
 
 bars1 :: AnimatedPiece
-bars1 = defaultAnimatedPiece $ translate v . D.mask sqMask . scale 400 . D.union <$> layers
+bars1 = defaultAnimatedPiece . rescale r $ D.mask sqMask . D.union <$> layers
   where
-    sqMask = D.rectangle 400 400
-    v = Vector 50 50
+    sqMask = D.rectangle 1 1
     layers = fmap <$> (mkCutLayer <$> time) <*> pure [0 .. 19]
+    r = fromWidthHeight (Point (-0.1) (-0.1)) 1.2 1.2
 
 mkCutLayer :: Time -> Int -> Drawing ColorStyle
 mkCutLayer t n =
@@ -145,10 +146,7 @@ canyonExit = makeCircular 1 $ D.composite [leftSide, rightSide]
     colors = cycle [Background, Foreground, HighlightA, HighlightB]
 
     animateScale = mkScale <$> time
-    mkScale t = scaleXY (power 0.5 $ 4 * t) 1
-
-power :: Floating a => a -> a -> a
-power b e = exp $ e * log b
+    mkScale t = scaleXY (0.5 ** 4 * t) 1
 
 -- | In which we go into a canyon
 bars5 :: AnimatedPiece
