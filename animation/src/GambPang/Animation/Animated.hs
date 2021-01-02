@@ -7,8 +7,6 @@ module GambPang.Animation.Animated (
 
     -- * Frame
     frame,
-    rescale,
-    unitRescale,
 
     -- * Time
     Time,
@@ -24,12 +22,8 @@ module GambPang.Animation.Animated (
 import Control.Monad.Trans.Reader (Reader, asks, local, runReader)
 import Data.Bifunctor (Bifunctor (second))
 
-import GambPang.Animation.LinearAlgebra (Point (..))
 import GambPang.Animation.Rectangle (
     Rectangle (..),
-    height,
-    unitRectangle,
-    width,
  )
 
 type Time = Double
@@ -65,17 +59,3 @@ backwards = timeControl negate
 
 frame :: Animated Rectangle
 frame = Animated $ asks fst
-
--- | Given a point and a rectangle, produce a new point with the same relation to the animation frame
-rescale :: Rectangle -> Point -> Animated Point
-rescale r0@Rectangle{lowerLeft = Point llx0 lly0} (Point x y) = getRescaledPoint <$> frame
-  where
-    getRescaledPoint r1@Rectangle{lowerLeft = Point llx lly} =
-        Point
-            { pointX = llx + (x - llx0) * width r1 / width r0
-            , pointY = lly + (y - lly0) * height r1 / width r1
-            }
-
--- | Rescale in the context of the unit rectangle
-unitRescale :: Point -> Animated Point
-unitRescale = rescale unitRectangle

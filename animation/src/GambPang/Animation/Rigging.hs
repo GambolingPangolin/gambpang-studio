@@ -13,8 +13,11 @@ module GambPang.Animation.Rigging (
     cameraPan,
     rotatingO,
     rotating,
+    rescale,
+    unitRescale,
 ) where
 
+import GambPang.Animation.Animated (Animated, frame, time)
 import GambPang.Animation.LinearAlgebra (
     AffineTransformation,
     Point,
@@ -30,8 +33,7 @@ import GambPang.Animation.LinearAlgebra (
  )
 import qualified GambPang.Animation.LinearAlgebra as LA
 import GambPang.Animation.Path (Path)
-import GambPang.Animation.Rectangle (Rectangle (..))
-import GambPang.Animation.Animated (Animated, time)
+import GambPang.Animation.Rectangle (Rectangle (..), center, height, unitRectangle, width)
 
 class Rigged a where
     transform :: AffineTransformation -> a -> a
@@ -141,3 +143,15 @@ scaling ::
     Double ->
     Motion a
 scaling r = scale . (r *) <$> time
+
+-- | Given a point and a rectangle, produce a new point with the same relation to the animation frame
+rescale :: Rigged a => Rectangle -> Animated a -> Animated a
+rescale r0 a = doRescale <$> frame <*> a
+  where
+    doRescale r1 = translate (dc r1) . scaleR r1 . translate (negateV $ dc r0)
+    dc = pointToVector . center
+    scaleR r1 = scaleXY (width r1 / width r0) (height r1 / height r0)
+
+-- | Rescale in the context of the unit rectangle
+unitRescale :: Rigged a => Animated a -> Animated a
+unitRescale = rescale unitRectangle

@@ -83,12 +83,10 @@ import GambPang.Animation.Animated (
     compress,
     expand,
     getStill,
-    rescale,
     shiftEarlier,
     shiftLater,
     time,
     timeControl,
-    unitRescale,
  )
 import GambPang.Animation.Bitmap (
     ViewFrame (..),
@@ -139,6 +137,7 @@ import GambPang.Animation.Rigging (
     cameraPan,
     followPath,
     reflect,
+    rescale,
     rotate,
     rotateO,
     rotating,
@@ -148,4 +147,5 @@ import GambPang.Animation.Rigging (
     scaling,
     translate,
     translating,
+    unitRescale,
  )
