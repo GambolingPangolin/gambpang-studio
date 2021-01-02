@@ -36,7 +36,7 @@ import GambPang.Animation.Bitmap (
  )
 import GambPang.Animation.Drawing.Internal (Drawing, mapColor, renderDrawing)
 import GambPang.Animation.Field2D (Field2D, valueAtPoint)
-import GambPang.Animation.Scene (
+import GambPang.Animation.Time (
     Animated,
     Time,
     valueAtTime,

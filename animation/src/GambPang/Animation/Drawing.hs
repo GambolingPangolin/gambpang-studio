@@ -20,7 +20,7 @@ module GambPang.Animation.Drawing (
 ) where
 
 import GambPang.Animation.Drawing.Internal
-import GambPang.Animation.Scene (Animated)
+import GambPang.Animation.Time (Animated)
 
 composite :: [Animated (Drawing c)] -> Animated (Drawing c)
 composite = fmap union . sequenceA

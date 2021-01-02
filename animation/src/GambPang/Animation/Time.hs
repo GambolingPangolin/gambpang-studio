@@ -1,7 +1,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module GambPang.Animation.Scene (
+module GambPang.Animation.Time (
     Time,
     Animated,
     valueAtTime,

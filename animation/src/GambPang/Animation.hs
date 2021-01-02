@@ -119,7 +119,7 @@ import GambPang.Animation.Rigging (
     translate,
     translating,
  )
-import GambPang.Animation.Scene (
+import GambPang.Animation.Time (
     Animated,
     Time,
     backwards,

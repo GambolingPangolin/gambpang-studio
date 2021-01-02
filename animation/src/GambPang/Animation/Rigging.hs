@@ -30,7 +30,7 @@ import GambPang.Animation.LinearAlgebra (
  )
 import qualified GambPang.Animation.LinearAlgebra as LA
 import GambPang.Animation.Path (Path)
-import GambPang.Animation.Scene (Animated, time)
+import GambPang.Animation.Time (Animated, time)
 
 class Rigged a where
     transform :: AffineTransformation -> a -> a

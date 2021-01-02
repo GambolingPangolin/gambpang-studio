@@ -14,7 +14,7 @@ import Data.Colour.SRGB (toSRGB24)
 import Data.Word (Word8)
 
 import GambPang.Animation.LinearAlgebra (Point (Point))
-import GambPang.Animation.Scene (Time)
+import GambPang.Animation.Time (Time)
 
 data ViewFrame = ViewFrame
     { lowerLeft :: (Int, Int)

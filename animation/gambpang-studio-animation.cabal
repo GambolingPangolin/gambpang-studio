@@ -27,7 +27,7 @@ library
     GambPang.Animation.Path
     GambPang.Animation.Render
     GambPang.Animation.Rigging
-    GambPang.Animation.Scene
+    GambPang.Animation.Time
     GambPang.Animation.Utils
 
   build-depends:
