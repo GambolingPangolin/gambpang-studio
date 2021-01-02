@@ -30,7 +30,6 @@ import GambPang.Animation (
     Motion,
     Point (..),
     Rigged (..),
-    Time (Time),
     Vector (..),
     ViewFrame (..),
     negateV,
@@ -61,7 +60,7 @@ defaultViewFrame =
         { lowerLeft = (0, 0)
         , viewFrameWidth = 500
         , viewFrameHeight = 500
-        , endTime = Time 1
+        , endTime = 1
         }
 
 originViewFrame :: ViewFrame
@@ -77,12 +76,12 @@ rotating ::
     Motion a
 rotating r = rot <$> time
   where
-    rot (Time t) = rotateO (2 * r * t * pi)
+    rot t = rotateO (2 * r * t * pi)
 
 rotatingP :: Rigged a => Point -> Double -> Motion a
 rotatingP p r = rot <$> time
   where
-    rot (Time t) = rotate p (2 * r * t * pi)
+    rot t = rotate p (2 * r * t * pi)
 
 translations :: (Functor f, Rigged b) => b -> f Vector -> f b
 translations s = fmap (`translate` s)

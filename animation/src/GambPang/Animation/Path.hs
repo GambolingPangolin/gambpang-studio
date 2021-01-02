@@ -18,31 +18,31 @@ import GambPang.Animation.LinearAlgebra (
     displacement,
     norm,
  )
-import GambPang.Animation.Scene (Animated (..), Time (Time), timeControl)
+import GambPang.Animation.Scene (Animated (..), Time, timeControl)
 
 type Path = Animated Point
 
 circularPath :: Time -> Point -> Double -> Animated Point
-circularPath (Time t) (Point x y) r = Animated thePath
+circularPath t (Point x y) r = Animated thePath
   where
-    thePath (Time s) = Point (x + r * cos (toRad s)) (y + r * sin (toRad s))
+    thePath s = Point (x + r * cos (toRad s)) (y + r * sin (toRad s))
     toRad s = 2 * pi * s / t
 
 -- | Repeat a given path segment forever
 makeCircular :: Time -> Animated a -> Animated a
-makeCircular (Time t) = timeControl toInterval
+makeCircular t = timeControl toInterval
   where
-    toInterval (Time s) = let q = floor @_ @Int $ s / t in Time $ s - fromIntegral q
+    toInterval s = let q = floor @_ @Int $ s / t in s - fromIntegral q
 
 pathProgram :: Time -> NonEmpty Point -> PiecewiseLinearPath
 pathProgram _ (p :| []) = PiecewiseLinearPath{plpStartingPoint = p, plpSegments = mempty}
-pathProgram (Time t) ps@(_ :| (p : ps')) = mkPLP $ normalizeTime <$> pointPairs
+pathProgram t ps@(_ :| (p : ps')) = mkPLP $ normalizeTime <$> pointPairs
   where
     pointPairs = NE.zipWith mkSegment ps (p :| ps')
-    mkSegment p1 p2 = (Time $ dist p1 p2, p1, p2)
+    mkSegment p1 p2 = (dist p1 p2, p1, p2)
     totalTime = sum $ getTime <$> pointPairs
-    getTime (Time t', _, _) = t'
-    normalizeTime (Time t', p1, p2) = (Time $ t' * t / totalTime, p1, p2)
+    getTime (t', _, _) = t'
+    normalizeTime (t', p1, p2) = (t' * t / totalTime, p1, p2)
     dist p1 = norm . displacement p1
     mkPLP ((t', p1, p2) :| pts) =
         PiecewiseLinearPath
@@ -54,10 +54,10 @@ pathProgram (Time t) ps@(_ :| (p : ps')) = mkPLP $ normalizeTime <$> pointPairs
 piecewiseLinear :: PiecewiseLinearPath -> Path
 piecewiseLinear plp = Animated $ thePath plan
   where
-    thePath (lps : lpss) t@(Time t')
-        | 0 >= t' = startPoint lps
-        | t' <= endTime lps =
-            interpolate (startPoint lps) (endPoint lps) $ (t' - startTime lps) / duration lps
+    thePath (lps : lpss) t
+        | 0 >= t = startPoint lps
+        | t <= endTime lps =
+            interpolate (startPoint lps) (endPoint lps) $ (t - startTime lps) / duration lps
         | otherwise = thePath lpss t
     thePath [] _ = finalPoint plp
 
@@ -99,7 +99,7 @@ duration lps = endTime lps - startTime lps
 toPathPlan :: [(Time, Point, Point)] -> [LinearSegment]
 toPathPlan ss = evalState (traverse accumTime ss) 0
   where
-    accumTime (Time dt, p1, p2) = do
+    accumTime (dt, p1, p2) = do
         t0 <- get
         put $ dt + t0
         pure

@@ -13,7 +13,7 @@ import GambPang.Animation (
     Drawing,
     PiecewiseLinearPath (..),
     Point (..),
-    Time (..),
+    Time,
     Vector (..),
     followPath,
     makeCircular,
@@ -102,8 +102,8 @@ snowfall ::
 snowfall r s d = followPath fallPath origin <*> pure flake
   where
     flake = D.draw HighlightA $ D.disc origin r
-    fallPath = makeCircular (Time 1) . piecewiseLinear $ PiecewiseLinearPath p0 segments
-    segments = [(s, p0), (s <> d, p1)]
+    fallPath = makeCircular 1 . piecewiseLinear $ PiecewiseLinearPath p0 segments
+    segments = [(s, p0), (s + d, p1)]
     p0 = Point 0 $ 500 + r
     p1 = Point 0 $ negate r
 
@@ -124,10 +124,10 @@ snowfield1 = D.union <$> sequenceA falls
         , mkFall 0.1 425 fallA
         , mkFall 0.6 475 fallB
         ]
-    fallA = snowfall 5 (Time 0) (Time 0.5)
-    fallB = snowfall 2 (Time 0) (Time 0.75)
+    fallA = snowfall 5 0 0.5
+    fallB = snowfall 2 0 0.75
 
-    mkFall t x = shiftLater (Time t) . translateX x
+    mkFall t x = shiftLater t . translateX x
 
     translateX x = translate (Vector x 0)
 

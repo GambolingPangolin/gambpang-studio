@@ -24,7 +24,7 @@ module GambPang.Animation (
     scaleXY,
 
     -- * Animation
-    Time (..),
+    Time,
     Path,
     followPath,
     pathProgram,

@@ -16,7 +16,7 @@ import GambPang.Animation (
     Animated (..),
     Drawing,
     Point (..),
-    Time (..),
+    Time,
     Vector (Vector),
     backwards,
     circularPath,
@@ -58,7 +58,7 @@ bars1 = defaultAnimatedPiece $ translate v . D.mask sqMask . scale 400 . D.union
     layers = fmap <$> (mkCutLayer <$> time) <*> pure [0 .. 19]
 
 mkCutLayer :: Time -> Int -> Drawing ColorStyle
-mkCutLayer (Time t) n =
+mkCutLayer t n =
     translate v . D.union $
         [ section
         , translate v1 section
@@ -88,31 +88,31 @@ bars2 =
   where
     components =
         [ rotatingMask
-        , shiftEarlier (Time 0.33) rotatingMask
-        , shiftEarlier (Time 0.66) rotatingMask
+        , shiftEarlier 0.33 rotatingMask
+        , shiftEarlier 0.66 rotatingMask
         ]
     rotatingMask = D.mask <$> (circleMask <$> time) <*> pure (stripes 20 500)
     circleMask t = D.disc (valueAtTime t path) 50
-    path = circularPath (Time 1) (Point 250 250) 100
+    path = circularPath 1 (Point 250 250) 100
 
 bars3 :: AnimatedPiece
 bars3 = defaultAnimatedPiece $ D.union <$> sequenceA components
   where
     components =
         [ element
-        , shiftEarlier (Time 0.33) element
-        , shiftEarlier (Time 0.66) element
+        , shiftEarlier 0.33 element
+        , shiftEarlier 0.66 element
         , pure bigBackground
         ]
     element = followPath path origin <*> rotatingMaskedStripes
     rotatingMaskedStripes = motion <*> pure (D.mask circleMask background)
 
     motion = Animated $ rotateO . mkAngle
-    mkAngle (Time t) = 4 * pi * t
+    mkAngle t = 4 * pi * t
     circleMask = D.disc origin 50
     background = translate v $ stripes 10 h
 
-    path = circularPath (Time 1) (Point 250 250) 100
+    path = circularPath 1 (Point 250 250) 100
     v = negateV $ Vector (h / 2) (h / 2)
     h = 100
 
@@ -135,7 +135,7 @@ bars4 = piece{palette = vegetablegarden, viewFrame = originViewFrame}
     piece = defaultAnimatedPiece canyonExit
 
 canyonExit :: Animated (Drawing ColorStyle)
-canyonExit = makeCircular (Time 1) $ D.union <$> sequenceA [leftSide, rightSide]
+canyonExit = makeCircular 1 $ D.union <$> sequenceA [leftSide, rightSide]
   where
     leftSide = animateScale <*> (pure . scaleXY (16 * 500) 500 . D.union) boxes
     rightSide = reflect (Vector 1 0) origin leftSide
@@ -148,7 +148,7 @@ canyonExit = makeCircular (Time 1) $ D.union <$> sequenceA [leftSide, rightSide]
     colors = cycle [Background, Foreground, HighlightA, HighlightB]
 
     animateScale = mkScale <$> time
-    mkScale (Time t) = scaleXY (power 0.5 $ 4 * t) 1
+    mkScale t = scaleXY (power 0.5 $ 4 * t) 1
 
 power :: Floating a => a -> a -> a
 power b e = exp $ e * log b

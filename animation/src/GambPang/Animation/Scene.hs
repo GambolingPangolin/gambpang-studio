@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module GambPang.Animation.Scene (
-    Time (..),
+    Time,
     Animated (..),
     valueAtTime,
     timeControl,
@@ -14,11 +14,7 @@ module GambPang.Animation.Scene (
     backwards,
 ) where
 
-import Data.Monoid (Sum (..))
-
-newtype Time = Time {unTime :: Double}
-    deriving (Eq, Ord, Show)
-    deriving (Semigroup, Monoid) via Sum Double
+type Time = Double
 
 newtype Animated a = Animated (Time -> a) deriving (Functor, Applicative, Monad)
 
@@ -33,21 +29,17 @@ timeControl f (Animated a) = Animated $ a . f
 
 -- | Speed up an animation.  So `compress 2 a` runs `a` and double speed (half time).
 compress :: Double -> Animated a -> Animated a
-compress a = timeControl $ \(Time t) -> Time (a * t)
+compress a = timeControl $ (a *)
 
 -- | Slow down an animation.  So `expand 2 a` makes `a` run in twice the time (half speed).
 expand :: Double -> Animated a -> Animated a
-expand a = timeControl $ \(Time t) -> Time (t / a)
+expand a = timeControl (/ a)
 
 shiftEarlier :: Time -> Animated a -> Animated a
-shiftEarlier (Time offset) = timeControl f
-  where
-    f (Time t) = Time $ t + offset
+shiftEarlier offset = timeControl (+ offset)
 
 shiftLater :: Time -> Animated a -> Animated a
-shiftLater (Time offset) = shiftEarlier . Time $ negate offset
+shiftLater offset = shiftEarlier $ negate offset
 
 backwards :: Animated a -> Animated a
-backwards = timeControl f
-  where
-    f (Time t) = Time $ negate t
+backwards = timeControl negate

@@ -33,7 +33,6 @@ import GambPang.Animation (
     Animated (..),
     Path,
     Point (..),
-    Time (..),
     Vector (..),
     backwards,
     circularPath,
@@ -141,7 +140,7 @@ dots2 = defaultAnimatedPiece $ translate v $ union2 <$> movingDot <*> pure field
     path =
         piecewiseLinear $
             pathProgram
-                (Time 1)
+                1
                 ( Point 0 0
                     :| [ Point 400 0
                        , Point 400 400
@@ -167,9 +166,9 @@ uniformDotFieldSpec n r c =
 dots3 :: AnimatedPiece
 dots3 = defaultAnimatedPiece . translate v . fmap D.union $ traverse mkDot [0 .. 10]
   where
-    mkDot i = shiftEarlier (Time $ i / 10) dot
+    mkDot i = shiftEarlier (i / 10) dot
     dot = followPath sinPath p0 <*> pure d
-    sinPath = Animated $ \(Time t) -> let s = toCircular t in Point (500 * s) (200 * sin (2 * pi * s))
+    sinPath = Animated $ \t -> let s = toCircular t in Point (500 * s) (200 * sin (2 * pi * s))
     v = Vector 0 250
     d = D.draw Foreground $ D.disc origin 10
     p0 = origin
@@ -194,7 +193,7 @@ dots4 =
   where
     dotElement = rotateO <$> (mkAngle <$> time) <*> pure d
     d = D.draw Foreground $ D.disc pCenter 20
-    mkAngle (Time t)
+    mkAngle t
         | t <= 0.5 = 2 * m * pi * progress (2 * t)
         | otherwise = negate $ 2 * m * progress (2 * t - 1)
     progress t = sin (pi * t)
@@ -221,7 +220,7 @@ dots5 = piece{viewFrame = originViewFrame, frameCount = 500}
     rOuterPath = rOuter + rCoiler + 5
 
     coilingDot = followPath (toroidalPath rInnerPath rOuterPath verticalWindingNumber 1) origin <*> pure coiler
-    isAboveAnnulus (Time t) = sin (2 * pi * verticalWindingNumber * t) > 0
+    isAboveAnnulus t = sin (2 * pi * verticalWindingNumber * t) > 0
 
     verticalWindingNumber = 5
 
@@ -241,7 +240,7 @@ toroidalPath ::
     -- | Winding number (longitudinal)
     Double ->
     Path
-toroidalPath r1 r2 n m = Animated $ \(Time t) -> toroidalProjection r1 r2 (a1 t, a2 t)
+toroidalPath r1 r2 n m = Animated $ \t -> toroidalProjection r1 r2 (a1 t, a2 t)
   where
     a1 = (2 * pi * m *)
     a2 = (2 * pi * n *)
@@ -269,7 +268,7 @@ dots6 = piece{viewFrame = originViewFrame, frameCount = 200, framesPerSec = 20}
     dotMatrix = D.union $ makeGrid ll ur 7 7 topDot
 
     thisGrating = grating ll ur 7 7 (D.disc origin 20)
-    hamster = followPath (circularPath (Time 1) origin 150) origin <*> pure dot
+    hamster = followPath (circularPath 1 origin 150) origin <*> pure dot
 
     dot = D.draw Foreground $ D.disc origin 80
     topDot i j p = D.draw (getColor i j) $ D.disc p 10
@@ -299,7 +298,7 @@ dots7 = piece{viewFrame = originViewFrame, palette = terracotta}
 displacementField :: Double -> Animated (Field2D Vector)
 displacementField a = mkField <$> time
   where
-    mkField (Time t) = getVector t <$> point
+    mkField t = getVector t <$> point
     getVector t p =
         let v = pointToVector p
             u = normalize v
@@ -330,7 +329,7 @@ flowDots dotCount rowCount = fmap D.union . traverse mkRow
   where
     mkRow frp = D.union . dots (frpColor frp) (frpRowIndex frp) (frpRowSpeed frp) <$> time
     dots c i s t = dot c i s t <$> [-1 .. fromIntegral dotCount]
-    dot c i s (Time t) j = D.draw c $ D.disc (getPosition i j s t) 10
+    dot c i s t j = D.draw c $ D.disc (getPosition i j s t) 10
     getPosition i j s t = Point (getX j s t) (getY i)
 
     getX j s t =
@@ -398,9 +397,9 @@ dots11 = piece{palette = lux, viewFrame = originViewFrame}
     innerFrame = squareFrame 50 75 HighlightA
     outerFrame = squareFrame 100 125 HighlightB
 
-    animatedDots = D.union <$> sequenceA [animatedDot, shiftLater (Time 0.2) animatedDot]
+    animatedDots = D.union <$> sequenceA [animatedDot, shiftLater 0.2 animatedDot]
 
-    animatedDot = makeCircular (Time 1) $ followPath path origin <*> pure dot
+    animatedDot = makeCircular 1 $ followPath path origin <*> pure dot
     dot = D.draw Foreground $ D.disc origin 15
     path = getPath <$> time
 
@@ -408,8 +407,8 @@ dots11 = piece{palette = lux, viewFrame = originViewFrame}
         let r = getR t
             a = getA t
          in Point (r * cos a) (r * sin a)
-    getR (Time t) = (* 225) . sin $ 2 * pi * t
-    getA (Time t)
+    getR t = (* 225) . sin $ 2 * pi * t
+    getA t
         | t <= 0.5 = 2 * pi * t
         | otherwise = negate $ 2 * pi * (t - 1)
 
@@ -437,7 +436,7 @@ dots12 = piece{viewFrame = originViewFrame, palette = calico}
         | (i + j) `mod` 3 == 1 = HighlightA
         | otherwise = HighlightB
 
-    movingBumpField = followPath (circularPath (Time 1) origin 165) origin <*> pure bumpField
+    movingBumpField = followPath (circularPath 1 origin 165) origin <*> pure bumpField
     bumpField = mkBumpField <$> scale a unitBump <*> unitField
     mkBumpField x v = scale (d * x) v
     a = 100
@@ -460,7 +459,7 @@ squareNavigator path = layers <$> time <*> dot
     dot = followPath path origin <*> pure staticDot
     staticDot = D.draw Foreground $ D.disc origin 15
 
-    layers (Time t) d
+    layers t d
         | isAbove t = D.union [quadFrames, d]
         | otherwise = D.union [d, quadFrames]
 
@@ -473,9 +472,9 @@ dots14 = piece{viewFrame = originViewFrame, frameCount = 200}
     piece = defaultAnimatedPiece $ squareNavigator path
 
     path =
-        makeCircular (Time 1)
+        makeCircular 1
             . piecewiseLinear
-            . pathProgram (Time 1)
+            . pathProgram 1
             $ Point mark 0 :| [Point 0 mark, Point (negate mark) 0, Point 0 (negate mark), Point mark 0]
 
     mark = 160
@@ -487,9 +486,9 @@ dots15 = piece{viewFrame = originViewFrame, frameCount = 200}
     piece = defaultAnimatedPiece $ squareNavigator path
 
     path =
-        makeCircular (Time 1)
+        makeCircular 1
             . piecewiseLinear
-            . pathProgram (Time 1)
+            . pathProgram 1
             $ Point 125 125
                 :| [ Point 125 (-125)
                    , Point (-125) (-125)
@@ -526,7 +525,7 @@ dots16 = piece{viewFrame = originViewFrame, palette = terracotta}
 dots16Field :: Double -> Animated (Field2D Double)
 dots16Field a = mkField <$> time
   where
-    mkField (Time t) = getScalar t <$> point
+    mkField t = getScalar t <$> point
     getScalar t p =
         let v = pointToVector p
             s = sin . (2 * pi *) $ norm v / 250 + t
@@ -544,18 +543,18 @@ dots17 = piece{viewFrame = originViewFrame, palette = desert}
     dA = dot HighlightA
     dB = dot HighlightB
     dots =
-        [ shiftEarlier (Time 0.5) dA
-        , shiftEarlier (Time 0.25) dB
+        [ shiftEarlier 0.5 dA
+        , shiftEarlier 0.25 dB
         , dA
-        , shiftLater (Time 0.25) dB
-        , shiftLater (Time 0.5) dA
-        , shiftLater (Time 0.75) dB
+        , shiftLater 0.25 dB
+        , shiftLater 0.5 dA
+        , shiftLater 0.75 dB
         ]
     dot c = compress (4 / 3) $ followPath path origin <*> pure (staticDot c)
     staticDot c = D.draw c $ D.disc origin 20
 
     path = mkPath <$> time
-    mkPath (Time t) = Point (a * sin (2 * pi * t)) (500 * (t - 0.5))
+    mkPath t = Point (a * sin (2 * pi * t)) (500 * (t - 0.5))
     a = 180
 
 -- | In which dots scale according to a moving bump
@@ -576,7 +575,7 @@ dots18 = piece{viewFrame = originViewFrame, palette = greenroom, frameCount = 20
         | (i + j) `mod` 3 == 1 = HighlightA
         | otherwise = HighlightB
 
-    movingBumpField = followPath (circularPath (Time 1) origin 165) origin <*> pure bumpField
+    movingBumpField = followPath (circularPath 1 origin 165) origin <*> pure bumpField
     bumpField = mkScalar <$> scale a unitBump
     mkScalar x = 1 + d * x
     a = 100
@@ -616,11 +615,11 @@ dots19 = piece{palette = markets, frameCount = 200}
 
     dot = followPath dotPath origin <*> pure staticDot
     sortableDot = mkDotEntry <$> time <*> dot
-    mkDotEntry (Time t) d = (500 * t, d)
+    mkDotEntry t d = (500 * t, d)
     staticDot = D.draw HighlightB $ D.disc origin 30
 
     dotPath =
-        makeCircular (Time 1)
+        makeCircular 1
             . piecewiseLinear
-            . pathProgram (Time 1)
+            . pathProgram 1
             $ Point 0 0 :| [Point 500 500]

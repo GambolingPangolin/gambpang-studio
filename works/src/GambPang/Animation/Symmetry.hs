@@ -17,7 +17,6 @@ import GambPang.Animation (
     Drawing,
     Point (Point),
     Rigged (..),
-    Time (..),
     compress,
     displacement,
     followPath,
@@ -128,13 +127,13 @@ animateTriangle n t nextPosition =
     D.union <$> sequenceA [dot, drawTriangle <$> animConcat [slide, reposition]]
   where
     slide = slideTriangleOut t 0.25
-    outPosition = valueAtTime (Time 1) slide
+    outPosition = valueAtTime 1 slide
     reposition = rotateAndSlide n nextPosition outPosition
     drawTriangle = D.draw Foreground . triangle
 
     dot = followPath dotPath origin <*> pure (D.draw HighlightB $ D.disc origin 10)
     dotPath =
-        piecewiseLinear . pathProgram (Time 1) $
+        piecewiseLinear . pathProgram 1 $
             handlePoint t :| [handlePoint outPosition, handlePoint t]
 
 -- | Move a triangle of the polygon
@@ -142,17 +141,17 @@ slideTriangleOut :: TriangularSegment -> Double -> Animated TriangularSegment
 slideTriangleOut ts scalingFactor = getTranslation <$> time <*> pure ts
   where
     p = handlePoint ts
-    getTranslation (Time t) = translate . scale (t * scalingFactor) $ pointToVector p
+    getTranslation t = translate . scale (t * scalingFactor) $ pointToVector p
 
 -- | Move a triangle to its destination, while rotating it as appropriate
 rotateAndSlide :: Int -> Int -> TriangularSegment -> Animated TriangularSegment
 rotateAndSlide n ix ts = applyTranslation <*> (applyRotation <*> pure ts)
   where
     applyTranslation = translate . getDisplacement <$> time
-    getDisplacement (Time t) = scale t $ displacement p0 p1
+    getDisplacement t = scale t $ displacement p0 p1
 
     applyRotation = rotateAboutHandle . getAngle <$> time
-    getAngle (Time t) = 2 * pi * t * fromIntegral (ix - pos0) / fromIntegral n
+    getAngle t = 2 * pi * t * fromIntegral (ix - pos0) / fromIntegral n
 
     p1 = getHandlePoint n ix
 
@@ -165,5 +164,5 @@ animConcat as = time >>= play . getSlot
   where
     n = length as
     nd = fromIntegral n
-    getSlot (Time t) = floor (nd * t) `mod` n
-    play ix = shiftLater (Time $ fromIntegral ix / nd) . compress nd $ as !! ix
+    getSlot t = floor (nd * t) `mod` n
+    play ix = shiftLater (fromIntegral ix / nd) . compress nd $ as !! ix

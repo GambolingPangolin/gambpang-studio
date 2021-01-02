@@ -14,10 +14,10 @@ import GambPang.Animation (
     Animated (..),
     Field2D (Field2D),
     Point (Point),
-    Time (..),
     Vector (..),
     rotateO,
     scale,
+    time,
     translate,
  )
 
@@ -60,9 +60,9 @@ scroller a w =
     field = infiniteField Background Foreground
 
 scrollerAnim :: Double -> Double -> Field2D a -> Animated (Field2D a)
-scrollerAnim zoom a s = Animated $ \(Time t) ->
-    translate (vec t) $ scale zoom rotatedScene
+scrollerAnim zoom a s = mkAnim <$> time
   where
+    mkAnim t = translate (vec t) $ scale zoom rotatedScene
     vec t = let z = 2 * zoom * t in scale z v
     v = rotateO a $ Vector 1 0
     rotatedScene = rotateO a s

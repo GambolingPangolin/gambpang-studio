@@ -30,7 +30,7 @@ import GambPang.Animation (
     Drawing,
     Point (..),
     Rigged (..),
-    Time (..),
+    Time,
     Vector (..),
     cameraPan,
     circularPath,
@@ -105,7 +105,7 @@ boxes1 = defaultAnimatedPiece . center300 . defaultZoom $ union2 cornerElements 
     mkTraveler e1 e2 = followPath (travPath e1 e2) travCenter <*> pure traveler
 
     travPath e1 e2 =
-        piecewiseLinear $ pathProgram (Time 1) (cornerElemPointA e1 :| [cornerElemPointB e2])
+        piecewiseLinear $ pathProgram 1 (cornerElemPointA e1 :| [cornerElemPointB e2])
 
 cornerElements :: Drawing ColorStyle
 cornerElements = D.union $ cornerElemDrawing <$> [ceLL, ceLR, ceUR, ceUL]
@@ -181,7 +181,7 @@ boxes2 = defaultAnimatedPiece . center300 $ union2 <$> Animated rotator <*> pure
   where
     backer = D.draw HighlightA $ D.rectangle 300 300
 
-    rotator (Time t) = D.draw HighlightB . D.polygon $ rotatorVertices t
+    rotator = D.draw HighlightB . D.polygon . rotatorVertices
     rotatorVertices t =
         scale 300
             <$> [ Point 0 t
@@ -198,13 +198,13 @@ boxes3 =
                 [pure cornerElements, travA, travB, travC, travD]
   where
     travA = followPath path travCenter <*> pure traveler
-    travB = shiftEarlier (Time 0.05) travA
-    travC = shiftEarlier (Time 0.10) travA
-    travD = shiftEarlier (Time 0.15) travA
+    travB = shiftEarlier 0.05 travA
+    travC = shiftEarlier 0.10 travA
+    travD = shiftEarlier 0.15 travA
     path =
-        makeCircular (Time 1)
+        makeCircular 1
             . piecewiseLinear
-            . pathProgram (Time 1)
+            . pathProgram 1
             $ cornerElemCorner ceLL
                 :| [ cornerElemCorner ceLR
                    , cornerElemCorner ceUR
@@ -262,15 +262,15 @@ boxes6 =
         , frameCount = 200
         }
   where
-    piece = defaultAnimatedPiece . shiftLater (Time 1) $ D.union <$> sequenceA travelers
+    piece = defaultAnimatedPiece . shiftLater 1 $ D.union <$> sequenceA travelers
 
     travelerPair =
         [ travelingBox Foreground
-        , shiftEarlier (Time offset) $ travelingBox HighlightA
+        , shiftEarlier offset $ travelingBox HighlightA
         ]
     travelers = take (4 * travelerHalfCount + 1) $ do
         i <- [0 ..]
-        shiftEarlier (Time $ 2 * i * offset) <$> travelerPair
+        shiftEarlier (2 * i * offset) <$> travelerPair
 
     travelerHalfCount = 6
     offset = 1 / (2 * fromIntegral travelerHalfCount)
@@ -289,7 +289,7 @@ boxes6 =
     path = piecewiseLinear . pathProgram duration $ startingPosition :| [endingPosition]
     scaling = scale . mkScale <$> time
 
-    mkScale (Time t)
+    mkScale t
         | t <= 0 = 1
         | t <= 0.5 = interp (2 * t) 1 maxFactor
         | t <= 1 = interp (2 * t - 1) maxFactor 1
@@ -299,7 +299,7 @@ interp :: Num a => a -> a -> a -> a
 interp u a b = (1 - u) * a + u * b
 
 duration :: Time
-duration = Time 1
+duration = 1
 
 -- | In which we scroll along a spinning-box field
 boxes7 :: AnimatedPiece
@@ -349,12 +349,12 @@ boxes8 = piece{viewFrame = originViewFrame}
         D.union
             <$> sequenceA
                 [ runner Foreground
-                , shiftLater (Time 0.33) $ runner HighlightA
-                , shiftLater (Time 0.66) $ runner HighlightB
+                , shiftLater 0.33 $ runner HighlightA
+                , shiftLater 0.66 $ runner HighlightB
                 ]
 
     runner c = followPath path origin <*> (rotating 1 <*> pure (staticRunner c))
-    path = circularPath (Time 1) origin 150
+    path = circularPath 1 origin 150
     staticRunner c =
         D.union
             [ D.draw c $ D.disc origin 80
@@ -379,15 +379,15 @@ boxes9 = piece{frameCount = 200}
 
     dots =
         [ dot HighlightA
-        , shiftLater (Time 0.1) (dot HighlightB)
+        , shiftLater 0.1 (dot HighlightB)
         ]
 
     dot c = followPath path origin <*> pure (staticDot c)
     staticDot c = D.draw c $ D.disc origin 10
     path =
-        makeCircular (Time 1)
+        makeCircular 1
             . piecewiseLinear
-            . pathProgram (Time 1)
+            . pathProgram 1
             . fmap (translate $ Vector 25 25)
             $ Point 0 100 :| [Point 100 450, Point 450 350, Point 350 0, Point 0 100]
 
@@ -398,7 +398,7 @@ boxes10 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
     mobileBox c p = translationField hWaves p <*> pure (box c p)
 
     hWaves = hWaveField <$> time
-    hWaveField (Time t) = hWaveValue t <$> point
+    hWaveField t = hWaveValue t <$> point
     hWaveValue t (Point _ y) = let v = a * sin (y / 400 + 2 * pi * t) in Vector v (negate v)
     a = 15
 
@@ -423,7 +423,7 @@ boxes11 = defaultAnimatedPiece $ D.union <$> sequenceA boxes
     mobileBox c p = scaleField hWaves p <*> pure (box c p)
 
     hWaves = hWaveField <$> time
-    hWaveField (Time t) = hWaveValue t <$> point
+    hWaveField t = hWaveValue t <$> point
     hWaveValue t (Point _ y) = a * sin (y / 400 + 2 * pi * t)
     a = 15
 
@@ -499,10 +499,10 @@ swapSet swaps = D.union <$> sequenceA steps
 
     steps = zipWith shiftLater timeOffsets $ uncurry boxes <$> swapPositions
 
-    timeOffsets = Time . (/ fromIntegral cFactor) . fromIntegral <$> [0 .. cFactor]
+    timeOffsets = (/ fromIntegral cFactor) . fromIntegral <$> [0 .. cFactor]
 
     crop a = runCrop <$> time <*> a
-    runCrop (Time t) d
+    runCrop t d
         | t >= 0 && t <= 1 = d
         | otherwise = D.union mempty
 

@@ -38,7 +38,7 @@ import GambPang.Animation.Drawing.Internal (Drawing, mapColor, renderDrawing)
 import GambPang.Animation.Field2D (Field2D, valueAtPoint)
 import GambPang.Animation.Scene (
     Animated (..),
-    Time (..),
+    Time,
     valueAtTime,
  )
 
@@ -64,7 +64,7 @@ renderAnimField2D n vf a = genImage <$> timeSamples vf n
 
 timeSamples :: ViewFrame -> Int -> [Time]
 timeSamples vf n =
-    Time . (unTime (endTime vf) *) . (/ fromIntegral n) . fromIntegral <$> [0 .. n]
+    (endTime vf *) . (/ fromIntegral n) . fromIntegral <$> [0 .. n]
 
 data AnimatedDrawingState = AnimatedDrawingState
     { frames :: [Image PixelRGBA8]
