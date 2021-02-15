@@ -88,9 +88,10 @@ toWorksheet p = Text.unlines . fmap Text.pack $ [populate . (,j) <$> positions |
   where
     baseArea = Set.fromList $ getBaseArea p.width p.height
     charMap = addEdges $ foldl' addBox mempty baseArea
-    addBox chars pos@(i, j)
-        | pos `Set.member` p.blockedTiles = chars
-        | otherwise = Map.insert (2 * i, 2 * j) crossingChar chars
+    addBox chars pos@(i, j) = Map.insert (2 * i, 2 * j) (getPosChar pos) chars
+    getPosChar pos
+        | pos `Set.member` p.blockedTiles = tileMask
+        | otherwise = crossingChar
 
     addEdges boxes = foldl' addEdge boxes p.blockedEdges
     addEdge boxes e = Map.insert (adjust $ edgeLocation e) blockChar boxes
@@ -105,26 +106,32 @@ crossingChar = '+'
 blockChar :: Char
 blockChar = 'x'
 
+tileMask :: Char
+tileMask = '0'
+
 parseWorksheet :: Text -> Either WorksheetError Pattern
-parseWorksheet raw = toPattern <$> foldM onChar (1, 1, mempty) chars
+parseWorksheet raw = toPattern <$> foldM onChar (1, 1, mempty, mempty) chars
   where
     chars = mconcat . zipWith mkIndexed [1 ..] . fmap (zip [1 ..] . Text.unpack) $ Text.lines raw
     mkIndexed i js = mkTriple i <$> js
     mkTriple i (j, x) = (i, j, x)
 
-    onChar p@(s, d, es) (i, j, c)
-        | even i && even j && c == crossingChar = pure (updateSum s i j, updateDiff d i j, es)
-        | odd (i + j) && c == blockChar = pure (s, d, Set.insert (Edge (i - 2, j - 2)) es)
+    onChar p@(s, d, es, bs) (i, j, c)
+        | even i && even j && c == crossingChar = pure (updateSum s i j, updateDiff d i j, es, bs)
+        | even i && even j && c == tileMask =
+            pure (updateSum s i j, updateDiff d i j, es, insertBlocked i j bs)
+        | odd (i + j) && c == blockChar = pure (s, d, Set.insert (Edge (i - 2, j - 2)) es, bs)
         | c == ' ' = pure p
         | otherwise = Left $ InvalidChar i j c
     updateSum s i j = max s $ (i + j) `quot` 2
     updateDiff s i j = max s . abs $ (i - j) `quot` 2
+    insertBlocked i j = Set.insert (i `quot` 2, j `quot` 2)
 
-    toPattern (mxs, mxd, es) =
+    toPattern (mxs, mxd, es, bs) =
         Pattern
             { width = getWidth mxs mxd
             , height = getHeight mxs mxd
-            , blockedTiles = mempty
+            , blockedTiles = bs
             , blockedEdges = es
             }
 
