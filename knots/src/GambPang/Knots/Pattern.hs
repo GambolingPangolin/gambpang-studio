@@ -1,5 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 
 module GambPang.Knots.Pattern (
@@ -16,19 +17,21 @@ module GambPang.Knots.Pattern (
 
 import Codec.Picture (
     Image,
-    Pixel,
-    PixelRGBA8,
+    PixelRGBA8 (..),
     generateImage,
     imageHeight,
     imageWidth,
     pixelAt,
+    readPixel,
     writePixel,
  )
 import Codec.Picture.Types (MutableImage, freezeImage, thawImage)
 import Control.Monad.ST (ST, runST)
+import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Word (Word8)
 import GambPang.Knots.Tiles (Tile (Tile), TileConfig, TileType (..), tile)
 
 data Pattern = Pattern
@@ -47,20 +50,17 @@ newPattern d =
         }
 
 defaultBlockedEdges :: Int -> Set Edge
-defaultBlockedEdges d = tops <> lefts <> bottoms <> rights
+defaultBlockedEdges d =
+    Set.fromList $
+        mconcat
+            [getEdge (i - 1) (j -1) <$> excludedEdges i j | (i, j) <- getBaseArea d]
   where
-    tops =
-        Set.fromList $
-            [getEdge (i - 1) (j - 1) TopEdge | i <- [1 .. 2 * d], j <- [1 .. 2 * d], hasTopEdge i j]
-    lefts =
-        Set.fromList $
-            [getEdge (i - 1) (j - 1) LeftEdge | i <- [1 .. 2 * d], j <- [1 .. 2 * d], hasLeftEdge i j]
-    bottoms =
-        Set.fromList $
-            [getEdge (i - 1) (j - 1) BottomEdge | i <- [1 .. 2 * d], j <- [1 .. 2 * d], hasBottomEdge i j]
-    rights =
-        Set.fromList $
-            [getEdge (i - 1) (j - 1) RightEdge | i <- [1 .. 2 * d], j <- [1 .. 2 * d], hasRightEdge i j]
+    excludedEdges i j =
+        bool id (TopEdge :) (hasTopEdge i j)
+            . bool id (LeftEdge :) (hasLeftEdge i j)
+            . bool id (BottomEdge :) (hasBottomEdge i j)
+            . bool id (RightEdge :) (hasRightEdge i j)
+            $ mempty
 
     hasTopEdge i j = inBaseRegion d i j && not (inBaseRegion d i (j + 1))
     hasLeftEdge i j = inBaseRegion d i j && not (inBaseRegion d (i - 1) j)
@@ -107,7 +107,9 @@ renderPattern ::
     Either PatternRenderError (Image PixelRGBA8)
 renderPattern tileConf patt mBgImage = buildImage <$> getTiles patt baseArea
   where
-    baseArea = getBaseArea patt.diagonal
+    baseArea = adjust <$> getBaseArea patt.diagonal
+    adjust (i, j) = (i - 1, j - 1)
+
     bgImage = fromMaybe (defaultBgImage tileConf patt) mBgImage
 
     buildImage ts = runST $ do
@@ -120,7 +122,12 @@ renderPattern tileConf patt mBgImage = buildImage <$> getTiles patt baseArea
     w = tileConf.width
 
 getBaseArea :: Int -> [(Int, Int)]
-getBaseArea d = [(i - 1, j - 1) | i <- [1 .. 2 * d], j <- [1 .. 2 * d], inBaseRegion d i j]
+getBaseArea d = mconcat region
+  where
+    region = [row j | j <- [1 .. 2 * d]]
+    row j
+        | j <= d = (,j) <$> [d + 1 - j .. d + j]
+        | otherwise = (,j) <$> [j - d .. 3 * d + 1 - j]
 
 getTiles :: Pattern -> [(Int, Int)] -> Either PatternRenderError [(Int, Int, Tile)]
 getTiles patt = traverse getTile . filter (not . isBlocked)
@@ -150,8 +157,23 @@ tileForLocation patt i j
 data PatternRenderError = InvalidBlockSet Int Int
     deriving (Eq, Show)
 
-overlay :: Pixel a => Int -> Int -> Image a -> MutableImage s a -> ST s ()
+overlay :: Int -> Int -> Image PixelRGBA8 -> MutableImage s PixelRGBA8 -> ST s ()
 overlay i0 j0 imgOver imgUnder = mapM_ (uncurry updatePixel) overlayPixels
   where
     overlayPixels = [(i - 1, j - 1) | i <- [1 .. imageWidth imgOver], j <- [1 .. imageHeight imgOver]]
-    updatePixel i j = writePixel imgUnder (i0 + i) (j0 + j) $ pixelAt imgOver i j
+    updatePixel i j = do
+        originalPixel <- readPixel imgUnder (i0 + i) (j0 + j)
+        writePixel imgUnder (i0 + i) (j0 + j) $
+            pixelAt imgOver i j `pixelOver` originalPixel
+
+pixelOver :: PixelRGBA8 -> PixelRGBA8 -> PixelRGBA8
+pixelOver (PixelRGBA8 rA gA bA aA) (PixelRGBA8 rB gB bB aB) = PixelRGBA8 r g b aB
+  where
+    r = convex aA rA rB
+    g = convex aA gA gB
+    b = convex aA bA bB
+
+convex :: Word8 -> Word8 -> Word8 -> Word8
+convex a x y =
+    floor @Double . (/ 0xff) $
+        fromIntegral x * fromIntegral a + fromIntegral y * fromIntegral (0xff - a)
