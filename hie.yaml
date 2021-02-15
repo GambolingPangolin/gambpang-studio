@@ -6,3 +6,7 @@ cradle:
       component: "lib:gambpang-studio-works"
     - path: "./works/Main.hs"
       component: "gambpang-studio-works:exe:gambpang-studio-works"
+    - path: "./knots/src/"
+      component: "lib:gambpang-knots"
+    - path: "./knots/exec/Main.hs"
+      component: "gambpang-knots:exe:gambpang-knots"

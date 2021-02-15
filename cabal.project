@@ -1,3 +1,4 @@
 packages:
   ./animation/gambpang-studio-animation.cabal
   ./works/gambpang-studio-works.cabal
+  ./knots/gambpang-knots.cabal
