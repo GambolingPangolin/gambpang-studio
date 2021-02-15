@@ -6,9 +6,14 @@
 module GambPang.Knots.Pattern.Encoding (
     decodePattern,
     toWorksheet,
+    parseWorksheet,
+
+    -- * Errors
+    WorksheetError (..),
 ) where
 
 import Control.Applicative (many, (<|>))
+import Control.Monad (foldM)
 import Data.Attoparsec.Text (Parser)
 import qualified Data.Attoparsec.Text as A
 import Data.Functor (void)
@@ -18,7 +23,14 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as Text
-import GambPang.Knots.Pattern (EdgePosition (..), Pattern (Pattern), edgeLocation, getBaseArea, getEdge)
+import GambPang.Knots.Pattern (
+    Edge (..),
+    EdgePosition (..),
+    Pattern (..),
+    edgeLocation,
+    getBaseArea,
+    getEdge,
+ )
 
 decodePattern :: Text -> Either String Pattern
 decodePattern = A.parseOnly patternP
@@ -92,3 +104,32 @@ crossingChar = '+'
 
 blockChar :: Char
 blockChar = 'x'
+
+parseWorksheet :: Text -> Either WorksheetError Pattern
+parseWorksheet raw = toPattern <$> foldM onChar (1, 1, mempty) chars
+  where
+    chars = mconcat . zipWith mkIndexed [1 ..] . fmap (zip [1 ..] . Text.unpack) $ Text.lines raw
+    mkIndexed i js = mkTriple i <$> js
+    mkTriple i (j, x) = (i, j, x)
+
+    onChar p@(s, d, es) (i, j, c)
+        | even i && even j && c == crossingChar = pure (updateSum s i j, updateDiff d i j, es)
+        | odd (i + j) && c == blockChar = pure (s, d, Set.insert (Edge (i - 2, j - 2)) es)
+        | c == ' ' = pure p
+        | otherwise = Left $ InvalidChar i j c
+    updateSum s i j = max s $ (i + j) `quot` 2
+    updateDiff s i j = max s . abs $ (i - j) `quot` 2
+
+    toPattern (mxs, mxd, es) =
+        Pattern
+            { width = getWidth mxs mxd
+            , height = getHeight mxs mxd
+            , blockedTiles = mempty
+            , blockedEdges = es
+            }
+
+    getHeight _ mxd = mxd
+    getWidth mxs mxd = (mxs - mxd - 1) `quot` 2
+
+data WorksheetError = InvalidChar Int Int Char
+    deriving (Eq, Show)

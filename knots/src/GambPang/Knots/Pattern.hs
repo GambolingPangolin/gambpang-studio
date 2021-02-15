@@ -8,7 +8,7 @@ module GambPang.Knots.Pattern (
     defaultBlockedEdges,
     addComputedBlockedEdges,
     getBaseArea,
-    Edge,
+    Edge (..),
     getEdge,
     edgeLocation,
     EdgePosition (..),
@@ -34,7 +34,6 @@ import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Tuple (swap)
 import Data.Word (Word8)
 import GambPang.Knots.Tiles (Tile (Tile), TileConfig, TileType (..), tile)
 
@@ -140,7 +139,7 @@ renderPattern tileConf patt mBgImage = buildImage <$> getTiles patt baseArea
 
 getBaseArea :: Int -> Int -> [(Int, Int)]
 getBaseArea w h
-    | w < h = swap <$> getBaseArea h w
+    | w < h = getBaseArea h w
     | otherwise = mconcat region
   where
     region = row <$> [1 .. w + h]
