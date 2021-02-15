@@ -19,7 +19,7 @@ data Tile = Tile
     }
     deriving (Eq, Show)
 
-data TileType = Elbow | Crossing | Straight
+data TileType = Elbow | Crossing | Straight | Tee
     deriving (Eq, Show)
 
 data TileConfig = TileConfig
@@ -34,6 +34,7 @@ tile conf t = case t.tileType of
     Elbow -> elbow conf t.position
     Crossing -> crossing conf t.position
     Straight -> straight conf t.position
+    Tee -> tee conf t.position
 
 elbow :: TileConfig -> Position -> Image PixelRGBA8
 elbow conf p = generateImage generate w w
@@ -77,6 +78,23 @@ straight conf p = generateImage generate w w
         | innerThird w j = conf.foreground
         | otherwise = conf.background
     vertical = flip horizontal
+    w = conf.width
+
+tee :: TileConfig -> Position -> Image PixelRGBA8
+tee conf p = generateImage generate w w
+  where
+    generate
+        | p `mod` 4 == 0 = skipTop
+        | p `mod` 4 == 1 = skipLeft
+        | p `mod` 4 == 2 = skipBottom
+        | otherwise = skipRight
+    skipTop i j
+        | innerThird w j = conf.foreground
+        | innerThird w i && firstThird w j = conf.foreground
+        | otherwise = conf.background
+    skipRight i j = skipTop j i
+    skipBottom i j = skipTop i (w - j)
+    skipLeft i j = skipRight (w - i) j
     w = conf.width
 
 firstThird :: Int -> Int -> Bool

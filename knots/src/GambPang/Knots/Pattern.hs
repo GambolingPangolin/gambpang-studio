@@ -167,6 +167,10 @@ tileForLocation patt i j
     | theBlockedEdges == [LeftEdge, BottomEdge] = pure $ Tile Elbow 1
     | theBlockedEdges == [BottomEdge, RightEdge] = pure $ Tile Elbow 0
     | theBlockedEdges == [TopEdge, RightEdge] = pure $ Tile Elbow 3
+    | theBlockedEdges == [TopEdge] = pure $ Tile Tee 0
+    | theBlockedEdges == [LeftEdge] = pure $ Tile Tee 1
+    | theBlockedEdges == [BottomEdge] = pure $ Tile Tee 2
+    | theBlockedEdges == [RightEdge] = pure $ Tile Tee 3
     | otherwise = Left $ InvalidBlockSet i j theBlockedEdges
   where
     theBlockedEdges = blockedSet patt i j
