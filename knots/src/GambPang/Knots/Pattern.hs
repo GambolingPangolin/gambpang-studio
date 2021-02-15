@@ -6,14 +6,16 @@
 module GambPang.Knots.Pattern (
     Pattern (..),
     defaultBlockedEdges,
+    addComputedBlockedEdges,
+    getBaseArea,
     Edge,
     getEdge,
+    edgeLocation,
     EdgePosition (..),
     blocked,
     renderPattern,
     newPattern,
     PatternRenderError (..),
-    addComputedBlockedEdges,
 ) where
 
 import Codec.Picture (
@@ -88,6 +90,9 @@ inBaseRegion w h i j = i + j <= 2 * mn + mx + 1 && i + j >= mx + 1 && abs (i - j
 newtype Edge = Edge (Int, Int)
     deriving (Eq, Ord, Show)
 
+edgeLocation :: Edge -> (Int, Int)
+edgeLocation (Edge x) = x
+
 data EdgePosition = TopEdge | LeftEdge | BottomEdge | RightEdge
     deriving (Eq, Enum, Ord, Show)
 
@@ -138,7 +143,7 @@ getBaseArea w h
     | w < h = swap <$> getBaseArea h w
     | otherwise = mconcat region
   where
-    region = [row j | j <- [1 .. w + h]]
+    region = row <$> [1 .. w + h]
     row j
         | j <= h = (,j) <$> [w + 1 - j .. w + j]
         | j > h && j <= w = (,j) <$> [w + 1 - j .. w + 1 - j + 2 * h]

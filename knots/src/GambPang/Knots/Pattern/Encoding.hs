@@ -1,19 +1,24 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
 
 module GambPang.Knots.Pattern.Encoding (
     decodePattern,
+    toWorksheet,
 ) where
 
 import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text (Parser)
 import qualified Data.Attoparsec.Text as A
 import Data.Functor (void)
-import Data.List (nub)
+import Data.List (foldl', nub)
+import qualified Data.Map.Strict as Map
+import Data.Maybe (fromMaybe)
 import qualified Data.Set as Set
 import Data.Text (Text)
-import GambPang.Knots.Pattern (EdgePosition (..), Pattern (Pattern), getEdge)
+import qualified Data.Text as Text
+import GambPang.Knots.Pattern (EdgePosition (..), Pattern (Pattern), edgeLocation, getBaseArea, getEdge)
 
 decodePattern :: Text -> Either String Pattern
 decodePattern = A.parseOnly patternP
@@ -65,3 +70,25 @@ newline = A.char '\n'
 
 newlines :: Parser ()
 newlines = void $ many newline
+
+toWorksheet :: Pattern -> Text
+toWorksheet p = Text.unlines . fmap Text.pack $ [populate . (,j) <$> positions | j <- positions]
+  where
+    baseArea = Set.fromList $ getBaseArea p.width p.height
+    charMap = addEdges $ foldl' addBox mempty baseArea
+    addBox chars pos@(i, j)
+        | pos `Set.member` p.blockedTiles = chars
+        | otherwise = Map.insert (2 * i, 2 * j) crossingChar chars
+
+    addEdges boxes = foldl' addEdge boxes p.blockedEdges
+    addEdge boxes e = Map.insert (adjust $ edgeLocation e) blockChar boxes
+    adjust (i, j) = (i + 2, j + 2)
+
+    populate pos = fromMaybe ' ' $ Map.lookup pos charMap
+    positions = [1 .. 2 * (p.width + p.height) + 1]
+
+crossingChar :: Char
+crossingChar = '+'
+
+blockChar :: Char
+blockChar = 'x'
