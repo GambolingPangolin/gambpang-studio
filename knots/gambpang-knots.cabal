@@ -12,7 +12,10 @@ common core
   ghc-options: -Wall
   build-depends:
       base >=4.13 && <4.15
+    , JuicyPixels ^>=3.3
     , record-hasfield ^>=1.0
+    , text ^>=1.2
+    , transformers ^>=0.5
 
 library
   import: core
@@ -21,13 +24,17 @@ library
     GambPang.Knots
     GambPang.Knots.Tiles
     GambPang.Knots.Pattern
+    GambPang.Knots.Pattern.Encoding
   build-depends:
-      colour ^>=2.3.5
+      attoparsec
     , containers ^>=0.6
-    , JuicyPixels ^>=3.3
 
 executable gambpang-knots
   import: core
   main-is: Main.hs
   hs-source-dirs: exec
   ghc-options: -O2
+  build-depends:
+      bytestring >=0.10 && <0.12
+    , optparse-applicative ^>=0.16
+    , gambpang-knots

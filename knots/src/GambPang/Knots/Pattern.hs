@@ -4,12 +4,14 @@
 
 module GambPang.Knots.Pattern (
     Pattern (..),
+    defaultBlockedEdges,
     Edge,
     getEdge,
     EdgePosition (..),
     blocked,
     renderPattern,
     newPattern,
+    PatternRenderError (..),
 ) where
 
 import Codec.Picture (
