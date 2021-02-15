@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -F -pgmF=record-dot-preprocessor #-}
+{-# OPTIONS_GHC -Wno-type-defaults #-}
 
 module GambPang.Knots.Tiles (
     Tile (..),
@@ -45,12 +46,13 @@ elbow conf p = generateImage generate w w
     upLeft i j
         | innerThird w i && lastThird w j = conf.foreground
         | firstThird w i && innerThird w j = conf.foreground
-        | innerThird w i && innerThird w j = conf.foreground
+        | innerThird w i && innerThird w j && withinCircle i j = conf.foreground
         | otherwise = conf.background
     upRight i j = upLeft (w - i) j
     downRight = flip upLeft
     downLeft i j = upLeft i (w - j)
     w = conf.width
+    withinCircle i j = (3 * i - w) ^ 2 + (3 * j - 2 * w) ^ 2 <= w ^ 2
 
 crossing :: TileConfig -> Position -> Image PixelRGBA8
 crossing conf p = generateImage generate w w
