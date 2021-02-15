@@ -3,7 +3,7 @@
 
 module Main where
 
-import Codec.Picture (DynamicImage (ImageRGBA8), PixelRGBA8 (PixelRGBA8), savePngImage)
+import Codec.Picture (DynamicImage (ImageRGBA8), PixelRGBA8, savePngImage)
 import Control.Applicative ((<**>), (<|>))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, except, runExceptT)
@@ -22,6 +22,7 @@ import GambPang.Knots.Pattern.Encoding (
     parseWorksheet,
     toWorksheet,
  )
+import GambPang.Knots.Pixels (readPixel)
 import GambPang.Knots.Tiles (TileConfig (..))
 import qualified Options.Applicative as Opt
 
@@ -31,6 +32,8 @@ data InputSource = SpecFile FilePath | WorksheetFile FilePath
 data RenderOptions = RenderOptions
     { inputFile :: InputSource
     , outputFile :: FilePath
+    , foreground :: PixelRGBA8
+    , background :: PixelRGBA8
     }
     deriving (Eq, Show)
 
@@ -53,7 +56,12 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
 
     renderCommand = Render <$> Opt.info (renderOpts <**> Opt.helper) renderDesc
     renderDesc = Opt.progDesc "Render a knot"
-    renderOpts = RenderOptions <$> optInput <*> optRenderOutputFile
+    renderOpts =
+        RenderOptions
+            <$> optInput
+            <*> optRenderOutputFile
+            <*> optForeground
+            <*> optBackground
 
     optInput = optSpec <|> optPattern
     optSpec =
@@ -75,6 +83,19 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
                 <> Opt.short 'o'
                 <> Opt.help "The path to the output file"
                 <> Opt.value "knot.png"
+    optForeground =
+        fmap readPixel . Opt.strOption $
+            Opt.long "foreground"
+                <> Opt.short 'f'
+                <> Opt.help "The foreground color"
+                <> Opt.value "#FFFFFF"
+    optBackground =
+        fmap readPixel . Opt.strOption $
+            Opt.long "background"
+                <> Opt.short 'b'
+                <> Opt.help "The background color"
+                <> Opt.value "#000000"
+
     genCommand = GenerateWorksheet <$> Opt.info (genOptions <**> Opt.helper) genDesc
     genDesc = Opt.progDesc "Generate a worksheet"
     genOptions = GenerateOptions <$> optWidth <*> optHeight <*> optGenOutputFile
@@ -109,21 +130,20 @@ main =
 createImage :: RenderOptions -> ExceptT KnotError IO ()
 createImage conf = do
     spec <- addComputedBlockedEdges <$> loadSpec conf.inputFile
-    except (first KnotRenderError $ renderPattern defaultConfig spec Nothing)
+    except (first KnotRenderError $ renderPattern tileConf spec Nothing)
         >>= lift . savePngImage conf.outputFile . ImageRGBA8
+  where
+    tileConf =
+        TileConfig
+            { foreground = conf.foreground
+            , background = conf.background
+            , width = 20
+            }
 
 loadSpec :: InputSource -> ExceptT KnotError IO Pattern
 loadSpec = \case
     SpecFile file -> lift (TIO.readFile file) >>= except . first ParseError . decodePattern
     WorksheetFile file -> lift (TIO.readFile file) >>= except . first WorksheetError . parseWorksheet
-
-defaultConfig :: TileConfig
-defaultConfig =
-    TileConfig
-        { foreground = PixelRGBA8 0xff 0xff 0xff 0xff
-        , background = PixelRGBA8 0x00 0x00 0x00 0xff
-        , width = 20
-        }
 
 data KnotError
     = KnotRenderError PatternRenderError
