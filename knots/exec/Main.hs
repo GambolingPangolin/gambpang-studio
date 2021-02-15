@@ -8,7 +8,12 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, except, runExceptT)
 import Data.Bifunctor (first)
 import qualified Data.Text.IO as TIO
-import GambPang.Knots.Pattern (Pattern, PatternRenderError, defaultBlockedEdges, renderPattern)
+import GambPang.Knots.Pattern (
+    Pattern,
+    PatternRenderError,
+    addComputedBlockedEdges,
+    renderPattern,
+ )
 import GambPang.Knots.Pattern.Encoding (decodePattern)
 import GambPang.Knots.Tiles (TileConfig (..))
 import qualified Options.Applicative as Opt
@@ -44,8 +49,7 @@ main = getOptions >>= runExceptT . createImage >>= either print ignore
 
 createImage :: Options -> ExceptT KnotError IO ()
 createImage conf = do
-    rawSpec <- loadSpec conf.specFile
-    let spec = rawSpec{blockedEdges = defaultBlockedEdges rawSpec.diagonal <> rawSpec.blockedEdges}
+    spec <- addComputedBlockedEdges <$> loadSpec conf.specFile
     except (first KnotRenderError $ renderPattern defaultConfig spec Nothing)
         >>= lift . savePngImage conf.outputFile . ImageRGBA8
 

@@ -13,6 +13,7 @@ module GambPang.Knots.Pattern (
     renderPattern,
     newPattern,
     PatternRenderError (..),
+    addComputedBlockedEdges,
 ) where
 
 import Codec.Picture (
@@ -31,29 +32,36 @@ import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Data.Tuple (swap)
 import Data.Word (Word8)
 import GambPang.Knots.Tiles (Tile (Tile), TileConfig, TileType (..), tile)
 
 data Pattern = Pattern
-    { diagonal :: Int
+    { width :: Int
+    , height :: Int
     , blockedTiles :: Set (Int, Int)
     , blockedEdges :: Set Edge
     }
     deriving (Eq, Show)
 
-newPattern :: Int -> Pattern
-newPattern d =
+newPattern :: Int -> Int -> Pattern
+newPattern w h =
     Pattern
-        { diagonal = d
+        { width = w
+        , height = h
         , blockedTiles = mempty
-        , blockedEdges = defaultBlockedEdges d
+        , blockedEdges = defaultBlockedEdges mempty w h
         }
 
-defaultBlockedEdges :: Int -> Set Edge
-defaultBlockedEdges d =
+addComputedBlockedEdges :: Pattern -> Pattern
+addComputedBlockedEdges p =
+    p{blockedEdges = p.blockedEdges <> defaultBlockedEdges p.blockedTiles p.width p.height}
+
+defaultBlockedEdges :: Set (Int, Int) -> Int -> Int -> Set Edge
+defaultBlockedEdges mask w h =
     Set.fromList $
         mconcat
-            [getEdge (i - 1) (j -1) <$> excludedEdges i j | (i, j) <- getBaseArea d]
+            [getEdge (i - 1) (j - 1) <$> excludedEdges i j | (i, j) <- getBaseArea w h]
   where
     excludedEdges i j =
         bool id (TopEdge :) (hasTopEdge i j)
@@ -62,15 +70,19 @@ defaultBlockedEdges d =
             . bool id (RightEdge :) (hasRightEdge i j)
             $ mempty
 
-    hasTopEdge i j = inBaseRegion d i j && not (inBaseRegion d i (j + 1))
-    hasLeftEdge i j = inBaseRegion d i j && not (inBaseRegion d (i - 1) j)
-    hasBottomEdge i j = inBaseRegion d i j && not (inBaseRegion d i (j - 1))
-    hasRightEdge i j = inBaseRegion d i j && not (inBaseRegion d (i + 1) j)
+    hasTopEdge i j = inRegion i j && not (inRegion i (j + 1))
+    hasLeftEdge i j = inRegion i j && not (inRegion (i - 1) j)
+    hasBottomEdge i j = inRegion i j && not (inRegion i (j - 1))
+    hasRightEdge i j = inRegion i j && not (inRegion (i + 1) j)
 
-inBaseRegion :: Int -> Int -> Int -> Bool
-inBaseRegion d i j = abs (fromIntegral i - x) + abs (fromIntegral j - x) <= x
+    inRegion i j = inBaseRegion w h i j && not (isMasked i j)
+    isMasked i j = (i, j) `Set.member` mask
+
+inBaseRegion :: Int -> Int -> Int -> Int -> Bool
+inBaseRegion w h i j = i + j <= 2 * mn + mx + 1 && i + j >= mx + 1 && abs (i - j) <= mx
   where
-    x = fromIntegral d + 0.5 :: Double
+    mn = min w h
+    mx = max w h
 
 -- | An edge is represented by its midpoint, where the center of pixel @(i,j)@ is @(i, j)@
 newtype Edge = Edge (Int, Int)
@@ -107,7 +119,7 @@ renderPattern ::
     Either PatternRenderError (Image PixelRGBA8)
 renderPattern tileConf patt mBgImage = buildImage <$> getTiles patt baseArea
   where
-    baseArea = adjust <$> getBaseArea patt.diagonal
+    baseArea = adjust <$> getBaseArea patt.width patt.height
     adjust (i, j) = (i - 1, j - 1)
 
     bgImage = fromMaybe (defaultBgImage tileConf patt) mBgImage
@@ -121,13 +133,16 @@ renderPattern tileConf patt mBgImage = buildImage <$> getTiles patt baseArea
     doOverlay img (i, j, t) = overlay (i * w) (j * w) (tile tileConf t) img
     w = tileConf.width
 
-getBaseArea :: Int -> [(Int, Int)]
-getBaseArea d = mconcat region
+getBaseArea :: Int -> Int -> [(Int, Int)]
+getBaseArea w h
+    | w < h = swap <$> getBaseArea h w
+    | otherwise = mconcat region
   where
-    region = [row j | j <- [1 .. 2 * d]]
+    region = [row j | j <- [1 .. w + h]]
     row j
-        | j <= d = (,j) <$> [d + 1 - j .. d + j]
-        | otherwise = (,j) <$> [j - d .. 3 * d + 1 - j]
+        | j <= h = (,j) <$> [w + 1 - j .. w + j]
+        | j > h && j <= w = (,j) <$> [w + 1 - j .. w + 1 - j + 2 * h]
+        | otherwise = (,j) <$> [j - w .. 2 * h + 1 - (j - w)]
 
 getTiles :: Pattern -> [(Int, Int)] -> Either PatternRenderError [(Int, Int, Tile)]
 getTiles patt = traverse getTile . filter (not . isBlocked)
@@ -139,7 +154,7 @@ defaultBgImage :: TileConfig -> Pattern -> Image PixelRGBA8
 defaultBgImage conf patt = generateImage mkPixel w w
   where
     mkPixel _ _ = conf.background
-    w = conf.width * 2 * patt.diagonal
+    w = conf.width * (patt.width + patt.height)
 
 tileForLocation :: Pattern -> Int -> Int -> Either PatternRenderError Tile
 tileForLocation patt i j

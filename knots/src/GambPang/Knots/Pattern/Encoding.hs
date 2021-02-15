@@ -6,7 +6,7 @@ module GambPang.Knots.Pattern.Encoding (
     decodePattern,
 ) where
 
-import Control.Applicative (many)
+import Control.Applicative (many, (<|>))
 import Data.Attoparsec.Text (Parser)
 import qualified Data.Attoparsec.Text as A
 import Data.Functor (void)
@@ -19,11 +19,17 @@ decodePattern :: Text -> Either String Pattern
 decodePattern = A.parseOnly patternP
 
 patternP :: Parser Pattern
-patternP = Pattern <$> diagonalP <*> tilesP <*> edgesP
+patternP =
+    Pattern
+        <$> widthP
+        <*> heightP
+        <*> (tilesP <|> pure mempty)
+        <*> (edgesP <|> pure mempty)
   where
-    diagonalP = A.string "diagonal =" >> spaces >> A.decimal <* newlines
+    widthP = itemP "width" A.decimal
+    heightP = itemP "height" A.decimal
 
-    tilesP = fmap Set.fromList $ A.string "tiles =" >> spaces >> (pairP `A.sepBy` spaces) <* newlines
+    tilesP = Set.fromList <$> itemP "tiles" (pairP `A.sepBy` spaces)
     pairP = do
         _ <- A.char '('
         i <- A.decimal
@@ -32,9 +38,7 @@ patternP = Pattern <$> diagonalP <*> tilesP <*> edgesP
         _ <- spaces >> A.char ')'
         pure (i, j)
 
-    edgesP =
-        fmap (Set.fromList . mconcat) $
-            A.string "edges =" >> spaces >> (edgeP `A.sepBy` spaces) <* newlines
+    edgesP = Set.fromList . mconcat <$> itemP "edges" (edgeP `A.sepBy` spaces)
     edgeP = do
         boundary <- A.many1 boundaryP
         (i, j) <- pairP
@@ -47,6 +51,8 @@ patternP = Pattern <$> diagonalP <*> tilesP <*> edgesP
             "R" -> pure RightEdge
             "B" -> pure BottomEdge
             _ -> fail "Unexpected edge code"
+
+    itemP name p = A.string name >> spaces >> A.char '=' >> spaces >> p <* newlines
 
 space :: Parser Char
 space = A.char ' '
