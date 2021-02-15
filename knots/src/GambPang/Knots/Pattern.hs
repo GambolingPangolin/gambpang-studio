@@ -62,7 +62,7 @@ defaultBlockedEdges :: Set (Int, Int) -> Int -> Int -> Set Edge
 defaultBlockedEdges mask w h =
     Set.fromList $
         mconcat
-            [getEdge (i - 1) (j - 1) <$> excludedEdges i j | (i, j) <- getBaseArea w h]
+            [getEdge i j <$> excludedEdges i j | (i, j) <- getBaseArea w h]
   where
     excludedEdges i j =
         bool id (TopEdge :) (hasTopEdge i j)
@@ -123,18 +123,16 @@ renderPattern ::
     Either PatternRenderError (Image PixelRGBA8)
 renderPattern tileConf patt mBgImage = buildImage <$> getTiles patt baseArea
   where
-    baseArea = adjust <$> getBaseArea patt.width patt.height
-    adjust (i, j) = (i - 1, j - 1)
-
-    bgImage = fromMaybe (defaultBgImage tileConf patt) mBgImage
+    baseArea = getBaseArea patt.width patt.height
 
     buildImage ts = runST $ do
         img <- thawImage bgImage
         mapM_ (doOverlay img) ts
         freezeImage img
+    bgImage = fromMaybe (defaultBgImage tileConf patt) mBgImage
 
     doOverlay :: MutableImage s PixelRGBA8 -> (Int, Int, Tile) -> ST s ()
-    doOverlay img (i, j, t) = overlay (i * w) (j * w) (tile tileConf t) img
+    doOverlay img (i, j, t) = overlay ((i - 1) * w) ((j - 1) * w) (tile tileConf t) img
     w = tileConf.width
 
 getBaseArea :: Int -> Int -> [(Int, Int)]
@@ -169,11 +167,11 @@ tileForLocation patt i j
     | theBlockedEdges == [LeftEdge, BottomEdge] = pure $ Tile Elbow 1
     | theBlockedEdges == [BottomEdge, RightEdge] = pure $ Tile Elbow 0
     | theBlockedEdges == [TopEdge, RightEdge] = pure $ Tile Elbow 3
-    | otherwise = Left $ InvalidBlockSet i j
+    | otherwise = Left $ InvalidBlockSet i j theBlockedEdges
   where
     theBlockedEdges = blockedSet patt i j
 
-data PatternRenderError = InvalidBlockSet Int Int
+data PatternRenderError = InvalidBlockSet Int Int [EdgePosition]
     deriving (Eq, Show)
 
 overlay :: Int -> Int -> Image PixelRGBA8 -> MutableImage s PixelRGBA8 -> ST s ()

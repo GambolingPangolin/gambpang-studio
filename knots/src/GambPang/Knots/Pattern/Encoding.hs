@@ -94,8 +94,7 @@ toWorksheet p = Text.unlines . fmap Text.pack $ [populate . (,j) <$> positions |
         | otherwise = crossingChar
 
     addEdges boxes = foldl' addEdge boxes p.blockedEdges
-    addEdge boxes e = Map.insert (adjust $ edgeLocation e) blockChar boxes
-    adjust (i, j) = (i + 2, j + 2)
+    addEdge boxes e = Map.insert (edgeLocation e) blockChar boxes
 
     populate pos = fromMaybe ' ' $ Map.lookup pos charMap
     positions = [1 .. 2 * (p.width + p.height) + 1]
@@ -120,7 +119,7 @@ parseWorksheet raw = toPattern <$> foldM onChar (1, 1, mempty, mempty) chars
         | even i && even j && c == crossingChar = pure (updateSum s i j, updateDiff d i j, es, bs)
         | even i && even j && c == tileMask =
             pure (updateSum s i j, updateDiff d i j, es, insertBlocked i j bs)
-        | odd (i + j) && c == blockChar = pure (s, d, Set.insert (Edge (i - 2, j - 2)) es, bs)
+        | odd (i + j) && c == blockChar = pure (s, d, Set.insert (Edge (i, j)) es, bs)
         | c == ' ' = pure p
         | otherwise = Left $ InvalidChar i j c
     updateSum s i j = max s $ (i + j) `quot` 2
