@@ -3,7 +3,12 @@
 
 module Main where
 
-import Codec.Picture (DynamicImage (ImageRGBA8), PixelRGBA8, savePngImage)
+import Codec.Picture (
+    DynamicImage (ImageRGBA8),
+    Image,
+    PixelRGBA8,
+    savePngImage,
+ )
 import Control.Applicative ((<**>), (<|>))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, except, runExceptT)
@@ -22,7 +27,7 @@ import GambPang.Knots.Pattern.Encoding (
     parseWorksheet,
     toWorksheet,
  )
-import GambPang.Knots.Pixels (readPixel)
+import GambPang.Knots.Pixels (readPixel, rotate)
 import GambPang.Knots.Tiles (TileConfig (..))
 import qualified Options.Applicative as Opt
 
@@ -131,7 +136,7 @@ createImage :: RenderOptions -> ExceptT KnotError IO ()
 createImage conf = do
     spec <- addComputedBlockedEdges <$> loadSpec conf.inputFile
     except (first KnotRenderError $ renderPattern tileConf spec Nothing)
-        >>= lift . savePngImage conf.outputFile . ImageRGBA8
+        >>= lift . savePngImage conf.outputFile . postProcess conf.background
   where
     tileConf =
         TileConfig
@@ -139,6 +144,9 @@ createImage conf = do
             , background = conf.background
             , width = 20
             }
+
+postProcess :: PixelRGBA8 -> Image PixelRGBA8 -> DynamicImage
+postProcess bg = ImageRGBA8 . rotate (pi / 4) bg
 
 loadSpec :: InputSource -> ExceptT KnotError IO Pattern
 loadSpec = \case
