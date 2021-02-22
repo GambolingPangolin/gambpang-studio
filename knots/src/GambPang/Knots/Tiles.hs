@@ -19,7 +19,12 @@ data Tile = Tile
     }
     deriving (Eq, Show)
 
-data TileType = Elbow | Crossing | Straight | Tee
+data TileType
+    = Elbow
+    | Crossing
+    | Straight
+    | Tee
+    | Blank
     deriving (Eq, Show)
 
 data TileConfig = TileConfig
@@ -35,6 +40,10 @@ tile conf t = case t.tileType of
     Crossing -> crossing conf t.position
     Straight -> straight conf t.position
     Tee -> tee conf t.position
+    Blank -> blank conf
+
+blank :: TileConfig -> Image PixelRGBA8
+blank conf = generateImage (\_ _ -> conf.background) conf.width conf.width
 
 elbow :: TileConfig -> Position -> Image PixelRGBA8
 elbow conf p = generateImage generate w w

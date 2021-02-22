@@ -171,6 +171,7 @@ tileForLocation patt i j
     | theBlockedEdges == [LeftEdge] = pure $ Tile Tee 1
     | theBlockedEdges == [BottomEdge] = pure $ Tile Tee 2
     | theBlockedEdges == [RightEdge] = pure $ Tile Tee 3
+    | length theBlockedEdges == 4 = pure $ Tile Blank 0
     | otherwise = Left $ InvalidBlockSet i j theBlockedEdges
   where
     theBlockedEdges = blockedSet patt i j
