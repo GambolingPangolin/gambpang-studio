@@ -80,7 +80,9 @@ defaultBlockedEdges mask w h =
     isMasked i j = (i, j) `Set.member` mask
 
 inBaseRegion :: Int -> Int -> Int -> Int -> Bool
-inBaseRegion w h i j = i + j <= 2 * mn + mx + 1 && i + j >= mx + 1 && abs (i - j) <= mx
+inBaseRegion w h i j
+    | w < h = inBaseRegion h w i $ w + h - j + 1
+    | otherwise = i + j <= 2 * mn + mx + 1 && i + j >= mx + 1 && abs (i - j) <= mx
   where
     mn = min w h
     mx = max w h
@@ -132,15 +134,21 @@ renderPattern tileConf patt mBgImage = buildImage <$> getTiles patt baseArea
     bgImage = fromMaybe (defaultBgImage tileConf patt) mBgImage
 
     doOverlay :: MutableImage s PixelRGBA8 -> (Int, Int, Tile) -> ST s ()
-    doOverlay img (i, j, t) = overlay ((i - 1) * w) ((j - 1) * w) (tile tileConf t) img
+    doOverlay img (i, j, t) =
+        overlay ((i - 1) * w + offset) ((j - 1) * w + offset) (tile tileConf t) img
     w = tileConf.width
+
+    offset = floor @Double $ excess * fromIntegral preTiltWidth
+    excess = 0.5 * (sqrt 2 - 1)
+    preTiltWidth = w * (patt.width + patt.height)
 
 getBaseArea :: Int -> Int -> [(Int, Int)]
 getBaseArea w h
-    | w < h = getBaseArea h w
+    | w < h = reflect <$> getBaseArea h w
     | otherwise = mconcat region
   where
     region = row <$> [1 .. w + h]
+    reflect (i, j) = (i, w + h - j + 1)
     row j
         | j <= h = (,j) <$> [w + 1 - j .. w + j]
         | j > h && j <= w = (,j) <$> [w + 1 - j .. w + 1 - j + 2 * h]
@@ -156,7 +164,11 @@ defaultBgImage :: TileConfig -> Pattern -> Image PixelRGBA8
 defaultBgImage conf patt = generateImage mkPixel w w
   where
     mkPixel _ _ = conf.background
-    w = conf.width * (patt.width + patt.height)
+    w =
+        floor @Double @Int
+            . (* sqrt 2)
+            . fromIntegral
+            $ conf.width * (patt.width + patt.height)
 
 tileForLocation :: Pattern -> Int -> Int -> Either PatternRenderError Tile
 tileForLocation patt i j
