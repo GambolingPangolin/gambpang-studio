@@ -13,13 +13,13 @@ module GambPang.Knots.Pattern.Encoding (
 ) where
 
 import Control.Applicative (many, (<|>))
-import Control.Monad (foldM)
+import Control.Monad ((>=>))
 import Data.Attoparsec.Text (Parser)
 import qualified Data.Attoparsec.Text as A
+import Data.Bifunctor (second)
 import Data.Functor (void)
-import Data.List (foldl', nub)
-import qualified Data.Map.Strict as Map
-import Data.Maybe (fromMaybe)
+import Data.List (nub)
+import Data.Maybe (catMaybes, mapMaybe)
 import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -27,8 +27,6 @@ import GambPang.Knots.Pattern (
     Edge (..),
     EdgePosition (..),
     Pattern (..),
-    edgeLocation,
-    getBaseArea,
     getEdge,
  )
 
@@ -84,20 +82,17 @@ newlines :: Parser ()
 newlines = void $ many newline
 
 toWorksheet :: Pattern -> Text
-toWorksheet p = Text.unlines . fmap Text.pack $ [populate . (,j) <$> positions | j <- positions]
+toWorksheet p = Text.unlines . reverse $ addPipes . Text.pack . fmap populate <$> positions
   where
-    baseArea = Set.fromList $ getBaseArea p.width p.height
-    charMap = addEdges $ foldl' addBox mempty baseArea
-    addBox chars pos@(i, j) = Map.insert (2 * i, 2 * j) (getPosChar pos) chars
-    getPosChar pos
-        | pos `Set.member` p.blockedTiles = tileMask
-        | otherwise = crossingChar
-
-    addEdges boxes = foldl' addEdge boxes p.blockedEdges
-    addEdge boxes e = Map.insert (edgeLocation e) blockChar boxes
-
-    populate pos = fromMaybe ' ' $ Map.lookup pos charMap
-    positions = [1 .. 2 * (p.width + p.height) + 1]
+    populate pos
+        | isWorksheetBox pos =
+            if standardPosition p.width pos `Set.member` p.blockedTiles
+                then tileMask
+                else crossingChar
+        | isWorksheetEdge pos && standardEdge p.width pos `Set.member` p.blockedEdges = blockChar
+        | otherwise = emptyChar
+    positions = [[TiltPosition (i, j) | i <- [0 .. worksheetWidth p]] | j <- [0 .. worksheetHeight p]]
+    addPipes x = "| " <> x <> " |"
 
 crossingChar :: Char
 crossingChar = '+'
@@ -108,34 +103,93 @@ blockChar = 'x'
 tileMask :: Char
 tileMask = '0'
 
-parseWorksheet :: Text -> Either WorksheetError Pattern
-parseWorksheet raw = toPattern <$> foldM onChar (1, 1, mempty, mempty) chars
-  where
-    chars = mconcat . zipWith mkIndexed [1 ..] . fmap (zip [1 ..] . Text.unpack) $ Text.lines raw
-    mkIndexed i js = mkTriple i <$> js
-    mkTriple i (j, x) = (i, j, x)
+emptyChar :: Char
+emptyChar = ' '
 
-    onChar p@(s, d, es, bs) (i, j, c)
-        | even i && even j && c == crossingChar = pure (updateSum s i j, updateDiff d i j, es, bs)
-        | even i && even j && c == tileMask =
-            pure (updateSum s i j, updateDiff d i j, es, insertBlocked i j bs)
-        | odd (i + j) && c == blockChar = pure (s, d, Set.insert (Edge (i, j)) es, bs)
-        | c == ' ' = pure p
-        | otherwise = Left $ InvalidChar i j c
-    updateSum s i j = max s $ (i + j) `quot` 2
-    updateDiff s i j = max s . abs $ (i - j) `quot` 2
-    insertBlocked i j = Set.insert (i `quot` 2, j `quot` 2)
-
-    toPattern (mxs, mxd, es, bs) =
-        Pattern
-            { width = getWidth mxs mxd
-            , height = getHeight mxs mxd
-            , blockedTiles = bs
-            , blockedEdges = es
-            }
-
-    getHeight _ mxd = mxd
-    getWidth mxs mxd = (mxs - mxd - 1) `quot` 2
-
-data WorksheetError = InvalidChar Int Int Char
+data Feature = FeatureTileBlock TiltPosition | FeatureEdgeBlock TiltPosition
     deriving (Eq, Show)
+
+parseWorksheet :: Text -> Either WorksheetError Pattern
+parseWorksheet =
+    traverse (parseLine . second (trim . Text.unpack))
+        . zip [0 ..]
+        . reverse
+        . Text.lines
+        >=> finalize
+  where
+    trim xs = take (length xs - 4) $ drop 2 xs
+    parseLine (j, row) = (length row,) <$> traverse (parseChar j) (zip [0 ..] row)
+    finalize rows
+        | equalRows (fst <$> rows) =
+            let w = (maximum (fst <$> rows) - 1) `div` 4
+                h = (length rows - 1) `div` 4
+                features = catMaybes . mconcat $ snd <$> rows
+             in pure
+                    Pattern
+                        { width = w
+                        , height = h
+                        , blockedTiles = Set.fromList $ mapMaybe (justTile w) features
+                        , blockedEdges = Set.fromList $ mapMaybe (justEdge w) features
+                        }
+        | otherwise = Left UnequalRows
+
+    equalRows xs = all (== maximum xs) xs
+
+    justEdge w = \case
+        FeatureEdgeBlock pos -> Just $ standardEdge w pos
+        _ -> Nothing
+    justTile w = \case
+        FeatureTileBlock pos -> Just $ standardPosition w pos
+        _ -> Nothing
+
+parseChar :: Int -> (Int, Char) -> Either WorksheetError (Maybe Feature)
+parseChar j (i, x)
+    | x == blockChar && isWorksheetEdge pos =
+        pure . Just $ FeatureEdgeBlock pos
+    | x == tileMask && isWorksheetBox pos = pure . Just $ FeatureTileBlock pos
+    | x == crossingChar && isWorksheetBox pos = pure Nothing
+    | x == emptyChar = pure Nothing
+    | otherwise = Left $ InvalidChar i j x
+  where
+    pos = TiltPosition (i, j)
+
+data WorksheetError = InvalidChar Int Int Char | UnequalRows
+    deriving (Eq, Show)
+
+worksheetHeight :: Pattern -> Int
+worksheetHeight p = 4 * p.height
+
+worksheetWidth :: Pattern -> Int
+worksheetWidth p = 4 * p.width
+
+newtype TiltPosition = TiltPosition (Int, Int)
+    deriving (Eq, Show)
+
+standardPosition ::
+    -- | Width
+    Int ->
+    TiltPosition ->
+    (Int, Int)
+standardPosition w (TiltPosition (i, j)) = (u, v)
+  where
+    x = i `div` 2
+    y = j `div` 2
+
+    u = (x + y + 1) `div` 2
+    v = ((y - x + 1) `div` 2) + w + 1
+
+standardEdge ::
+    -- | Width
+    Int ->
+    TiltPosition ->
+    Edge
+standardEdge w (TiltPosition (i, j)) = Edge (u, v)
+  where
+    u = ((i + j) `div` 2) + 1
+    v = ((j - i) `div` 2) + 2 * w + 1
+
+isWorksheetBox :: TiltPosition -> Bool
+isWorksheetBox (TiltPosition (i, j)) = even i && even j && odd ((i + j) `div` 2)
+
+isWorksheetEdge :: TiltPosition -> Bool
+isWorksheetEdge (TiltPosition (i, j)) = odd i && odd j
