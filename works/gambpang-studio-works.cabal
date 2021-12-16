@@ -17,15 +17,15 @@ common shared
   default-language: Haskell2010
   ghc-options:      -Wall
   build-depends:
-      aeson ^>=1.5
-    , base >=4.13  && <4.15
+      aeson >=1.5 && <2.1
+    , base >=4.13  && <4.17
     , bytestring >=0.10 && <0.12
     , containers ^>=0.6
     , gambpang-studio-animation ^>=0.1
     , JuicyPixels ^>=3.3
-    , lucid ^>=2.9
+    , lucid >=2.9 && <2.12
     , text ^>=1.2
-    , transformers ^>=0.5
+    , transformers >=0.5 && <0.7
 
 library
   import: shared
@@ -52,9 +52,9 @@ library
     , base64-bytestring >=1.0 && <1.3
     , clay ^>=0.13
     , colour ^>=2.3.5
-    , cryptonite >=0.25 && <0.28
-    , file-embed >=0.0.12 && <0.0.13
-    , memory ^>=0.15
+    , cryptonite >=0.25 && <0.30
+    , file-embed >=0.0.12 && <0.0.16
+    , memory >=0.15 && <0.17
 
 executable gambpang-studio-works
   import: shared
