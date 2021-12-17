@@ -24,6 +24,7 @@ data TileType
     | Crossing
     | Straight
     | Tee
+    | Deadend
     | Blank
     deriving (Eq, Show)
 
@@ -40,6 +41,7 @@ tile conf t = case t.tileType of
     Crossing -> crossing conf t.position
     Straight -> straight conf t.position
     Tee -> tee conf t.position
+    Deadend -> deadend conf t.position
     Blank -> blank conf
 
 blank :: TileConfig -> Image PixelRGBA8
@@ -104,6 +106,22 @@ tee conf p = generateImage generate w w
     skipRight i j = skipTop j i
     skipBottom i j = skipTop i (w - j)
     skipLeft i j = skipRight (w - i) j
+    w = conf.width
+
+deadend :: TileConfig -> Position -> Image PixelRGBA8
+deadend conf p = generateImage generate w w
+  where
+    generate
+        | p `mod` 4 == 0 = fillBottom
+        | p `mod` 4 == 1 = fillRight
+        | p `mod` 4 == 2 = fillTop
+        | otherwise = fillLeft
+    fillBottom i j
+        | innerThird w i && (firstThird w j || innerThird w j) = conf.foreground
+        | otherwise = conf.background
+    fillTop i j = fillBottom i (w - j)
+    fillRight i j = fillTop j i
+    fillLeft i j = fillRight (w - i) j
     w = conf.width
 
 firstThird :: Int -> Int -> Bool

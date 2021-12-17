@@ -58,7 +58,11 @@ addComputedBlockedEdges :: Pattern -> Pattern
 addComputedBlockedEdges p =
     p{blockedEdges = p.blockedEdges <> defaultBlockedEdges p.blockedTiles p.width p.height}
 
-defaultBlockedEdges :: Set (Int, Int) -> Int -> Int -> Set Edge
+defaultBlockedEdges ::
+    Set (Int, Int) ->
+    Int ->
+    Int ->
+    Set Edge
 defaultBlockedEdges mask w h =
     Set.fromList $
         mconcat
@@ -79,7 +83,16 @@ defaultBlockedEdges mask w h =
     inRegion i j = inBaseRegion w h i j && not (isMasked i j)
     isMasked i j = (i, j) `Set.member` mask
 
-inBaseRegion :: Int -> Int -> Int -> Int -> Bool
+inBaseRegion ::
+    -- | Width
+    Int ->
+    -- | Height
+    Int ->
+    -- | x-position
+    Int ->
+    -- | y-position
+    Int ->
+    Bool
 inBaseRegion w h i j
     | w < h = inBaseRegion h w i $ w + h - j + 1
     | otherwise = i + j <= 2 * mn + mx + 1 && i + j >= mx + 1 && abs (i - j) <= mx
@@ -183,8 +196,12 @@ tileForLocation patt i j
     | theBlockedEdges == [LeftEdge] = pure $ Tile Tee 1
     | theBlockedEdges == [BottomEdge] = pure $ Tile Tee 2
     | theBlockedEdges == [RightEdge] = pure $ Tile Tee 3
-    | length theBlockedEdges == 4 = pure $ Tile Blank 0
-    | otherwise = Left $ InvalidBlockSet i j theBlockedEdges
+    | length theBlockedEdges == 3 = case () of
+        _ | RightEdge `notElem` theBlockedEdges -> pure $ Tile Deadend 1
+        _ | TopEdge `notElem` theBlockedEdges -> pure $ Tile Deadend 2
+        _ | LeftEdge `notElem` theBlockedEdges -> pure $ Tile Deadend 3
+        _ | otherwise -> pure $ Tile Deadend 4
+    | otherwise = pure $ Tile Blank 0
   where
     theBlockedEdges = blockedSet patt i j
 

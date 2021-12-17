@@ -176,7 +176,7 @@ standardPosition w (TiltPosition (i, j)) = (u, v)
     y = j `div` 2
 
     u = (x + y + 1) `div` 2
-    v = ((y - x + 1) `div` 2) + w + 1
+    v = ((y - x + 1) `div` 2) + w
 
 standardEdge ::
     -- | Width
