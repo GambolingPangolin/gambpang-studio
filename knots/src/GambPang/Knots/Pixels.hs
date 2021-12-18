@@ -3,16 +3,25 @@
 module GambPang.Knots.Pixels (
     readPixel,
     rotate,
+    crop,
+    toGrayscale,
 ) where
 
 import Codec.Picture (
+    DynamicImage,
     Image,
+    Pixel,
+    Pixel8,
     PixelRGBA8 (PixelRGBA8),
+    PixelYCbCr8 (PixelYCbCr8),
+    convertRGB8,
     generateImage,
     imageHeight,
     imageWidth,
     pixelAt,
+    pixelMap,
  )
+import Codec.Picture.Types (convertImage)
 import Data.Colour (
     AlphaColour,
     affineCombo,
@@ -59,6 +68,21 @@ applyRotation a (i, j) =
     ( cos a * fromIntegral @_ @Double i - sin a * fromIntegral j
     , sin a * fromIntegral @_ @Double i + cos a * fromIntegral j
     )
+
+crop ::
+    Pixel a =>
+    -- | Minimum
+    (Int, Int) ->
+    -- |  Maximum
+    (Int, Int) ->
+    Image a ->
+    Image a
+crop (minX, minY) (maxX, maxY) sourceImage = generateImage generate w h
+  where
+    w = maxX - minX + 1
+    h = maxY - minY + 1
+
+    generate x y = pixelAt sourceImage (x + minX) (y + minY)
 
 -- Calculate the position as a weighted sum over integral positions
 calcPixelWeights :: (Double, Double) -> [(Int, Int, Double)]
@@ -123,3 +147,8 @@ toPixel c = PixelRGBA8 r g b a
   where
     a = floor $ 0xFF * alphaChannel c
     RGB r g b = toSRGB24 $ c `over` black
+
+toGrayscale :: DynamicImage -> Image Pixel8
+toGrayscale = pixelMap convert . convertImage . convertRGB8
+  where
+    convert (PixelYCbCr8 y _ _) = y
