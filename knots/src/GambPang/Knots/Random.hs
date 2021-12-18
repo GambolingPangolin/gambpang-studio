@@ -19,6 +19,10 @@ randomPattern p w h = foldM onEdge (newPattern w h) allEdges
   where
     allEdges = [Edge (i, j) | i <- edgeIndices, j <- edgeIndices, odd (i + j)]
     edgeIndices = [1 .. 2 * (w + h) + 1]
-    onEdge thePattern e = bool id (addEdge e) <$> sample <*> pure thePattern
+    onEdge thePattern e = bool id (addEdge e) <$> sample e <*> pure thePattern
     addEdge e thePattern = thePattern{blockedEdges = Set.insert e $ blockedEdges thePattern}
-    sample = (< p) <$> randomRIO (0, 1)
+    sample (Edge (_, j)) = (< threshold j) <$> randomRIO (0, 1)
+    threshold = (p *) . sqrt . sawtooth
+    sawtooth j
+        | j <= w + h + 1 = fromIntegral j / fromIntegral (w + h + 1)
+        | otherwise = fromIntegral (2 * (w + h + 1) - j) / fromIntegral (w + h - 1)
