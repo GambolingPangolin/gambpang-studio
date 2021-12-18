@@ -278,12 +278,12 @@ postProcess ::
     DynamicImage
 postProcess thePattern bg sourceImage = ImageRGBA8 processedImage
   where
-    rotatedImage = rotate (pi / 4) bg sourceImage
+    rotatedImage = rotate (negate pi / 4) bg sourceImage
     w = imageWidth sourceImage
-    knotW = ceiling (fromIntegral (tileW * thePattern.height) * sqrt @Double 2) + tileW
+    knotW = ceiling (fromIntegral (tileW * thePattern.width) * sqrt @Double 2) + tileW
 
     h = imageHeight sourceImage
-    knotH = ceiling (fromIntegral (tileW * thePattern.width) * sqrt @Double 2) + tileW
+    knotH = ceiling (fromIntegral (tileW * thePattern.height) * sqrt @Double 2) + tileW
 
     minX = (w - knotW) `quot` 2
     minY = (h - knotH) `quot` 2
