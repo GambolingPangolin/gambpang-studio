@@ -82,7 +82,7 @@ newlines :: Parser ()
 newlines = void $ many newline
 
 toWorksheet :: Pattern -> Text
-toWorksheet p = Text.unlines . reverse $ addPipes . Text.pack . fmap populate <$> positions
+toWorksheet p = Text.unlines $ addPipes . Text.pack . fmap populate <$> positions
   where
     populate pos
         | isWorksheetBox pos =

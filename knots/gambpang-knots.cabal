@@ -21,10 +21,11 @@ library
   import: core
   hs-source-dirs: src
   exposed-modules:
-    GambPang.Knots.Pixels
-    GambPang.Knots.Tiles
+    GambPang.Knots.Image
     GambPang.Knots.Pattern
     GambPang.Knots.Pattern.Encoding
+    GambPang.Knots.Pixels
+    GambPang.Knots.Tiles
   build-depends:
       attoparsec
     , colour ^>=2.3.5
