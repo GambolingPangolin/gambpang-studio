@@ -9,7 +9,7 @@ module GambPang.Knots.Tiles (
     tile,
 ) where
 
-import Codec.Picture (Image, PixelRGBA8, generateImage)
+import Codec.Picture (Image, PixelRGBA8, generateImage, mixWith)
 
 type Position = Int
 
@@ -117,12 +117,17 @@ deadend conf p = generateImage generate w w
         | p `mod` 4 == 2 = fillTop
         | otherwise = fillLeft
     fillBottom i j
-        | innerThird w i && (firstThird w j || innerThird w j) = conf.foreground
+        | innerThird w i =
+            mixWith (weightedSum j) conf.background conf.foreground
         | otherwise = conf.background
     fillTop i j = fillBottom i (w - j)
     fillRight i j = fillTop j i
     fillLeft i j = fillRight (w - i) j
     w = conf.width
+
+    weightedSum j _ v0 v1 = ceiling $ z * fromIntegral v0 + (1 - z) * fromIntegral v1
+      where
+        z = min 1 $ 3 * fromIntegral j / (2 * fromIntegral w)
 
 firstThird :: Int -> Int -> Bool
 firstThird w x = 3 * x < w
