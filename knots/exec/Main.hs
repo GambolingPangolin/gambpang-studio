@@ -34,6 +34,7 @@ import GambPang.Knots.Pattern.Encoding (
     toWorksheet,
  )
 import GambPang.Knots.Pixels (crop, readPixel, rotate, toGrayscale)
+import GambPang.Knots.Random (randomPattern)
 import GambPang.Knots.Tiles (TileConfig (..))
 import qualified Options.Applicative as Opt
 
@@ -67,10 +68,21 @@ data ConvertOptions = ConvertOptions
     }
     deriving (Eq, Show)
 
+data RandomOptions = RandomOptions
+    { randomOutput :: FilePath
+    , randomWidth :: Int
+    , randomHeight :: Int
+    , randomDensity :: Double
+    , randomForeground :: PixelRGBA8
+    , randomBackground :: PixelRGBA8
+    }
+    deriving (Eq, Show)
+
 data Command
     = Render RenderOptions
     | GenerateWorksheet GenerateOptions
     | Convert ConvertOptions
+    | Random RandomOptions
     deriving (Eq, Show)
 
 getOptions :: IO Command
@@ -82,6 +94,7 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
             Opt.command "render" renderCommand
                 <> Opt.command "generate" genCommand
                 <> Opt.command "convert" convertCommand
+                <> Opt.command "random" randomCommand
 
     renderCommand = Render <$> Opt.info renderOpts renderDesc
     renderDesc = Opt.progDesc "Render a knot"
@@ -132,7 +145,7 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
 
     genCommand = GenerateWorksheet <$> Opt.info genOptions genDesc
     genDesc = Opt.progDesc "Generate a worksheet"
-    genOptions = GenerateOptions <$> optWidth <*> optHeight <*> optGenOutputFile
+    genOptions = GenerateOptions <$> optWidth <*> optHeight <*> optOutputFile
     optWidth =
         Opt.option Opt.auto $
             Opt.long "width"
@@ -147,13 +160,6 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
                 <> Opt.value 10
                 <> Opt.help "Height of pattern"
                 <> Opt.showDefault
-    optGenOutputFile =
-        Opt.strOption $
-            Opt.long "output"
-                <> Opt.short 'o'
-                <> Opt.help "The path to the output file"
-                <> Opt.value "knot.pattern"
-                <> Opt.showDefault
 
     convertCommand = Convert <$> Opt.info convertOptions convertDesc
     convertDesc = Opt.progDesc "Convert an image to a celtic knot"
@@ -161,7 +167,7 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
         ConvertOptions
             <$> optInputImage
             <*> optConvertOutputType
-            <*> optConvertOutputFile
+            <*> optOutputFile
             <*> optForeground
             <*> optBackground
     optInputImage =
@@ -172,12 +178,30 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
     optConvertOutputType =
         Opt.flag OutputImage OutputWorksheet $
             Opt.long "worksheet" <> Opt.help "Produce a worksheet instead of an image"
-    optConvertOutputFile =
+    optOutputFile =
         Opt.strOption $
             Opt.long "output"
                 <> Opt.short 'o'
                 <> Opt.value "knot.png"
                 <> Opt.help "The path at which to output the knot image"
+                <> Opt.showDefault
+
+    randomCommand = Random <$> Opt.info randomOptions randomDesc
+    randomDesc = Opt.progDesc "Generate a random knot"
+    randomOptions =
+        RandomOptions
+            <$> optOutputFile
+            <*> optWidth
+            <*> optHeight
+            <*> optDensity
+            <*> optForeground
+            <*> optBackground
+    optDensity =
+        Opt.option Opt.auto $
+            Opt.short 'd'
+                <> Opt.long "density"
+                <> Opt.value 0.6
+                <> Opt.help "Density of blocked edges"
                 <> Opt.showDefault
 
 main :: IO ()
@@ -187,6 +211,7 @@ main =
         GenerateWorksheet opts ->
             TIO.writeFile opts.outputFile . toWorksheet $ newPattern opts.width opts.height
         Convert opts -> convertImage opts
+        Random opts -> randomKnot opts
   where
     ignore = const $ pure ()
 
@@ -214,11 +239,7 @@ convertImage opts =
             either
                 (throwIO . KnotRenderError)
                 pure
-                ( renderPattern
-                    tileConf
-                    thePattern
-                    Nothing
-                )
+                (renderPattern tileConf thePattern Nothing)
                 >>= savePngImage (convertOutput opts)
                     . postProcess thePattern (convertBackground opts)
         OutputWorksheet -> TIO.putStrLn $ toWorksheet thePattern
@@ -228,6 +249,23 @@ convertImage opts =
             { foreground = convertForeground opts
             , background = convertBackground opts
             , width = 10
+            }
+
+randomKnot :: RandomOptions -> IO ()
+randomKnot opts = do
+    thePattern <- randomPattern opts.randomDensity opts.randomWidth opts.randomHeight
+    either
+        (throwIO . KnotRenderError)
+        pure
+        (renderPattern tileConf thePattern Nothing)
+        >>= savePngImage opts.randomOutput
+            . postProcess thePattern opts.randomBackground
+  where
+    tileConf =
+        TileConfig
+            { foreground = opts.randomForeground
+            , background = opts.randomBackground
+            , width = 20
             }
 
 {- | Knots are naturally oriented diagonally, so we need to rotate the image and

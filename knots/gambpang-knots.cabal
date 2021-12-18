@@ -25,11 +25,13 @@ library
     GambPang.Knots.Pattern
     GambPang.Knots.Pattern.Encoding
     GambPang.Knots.Pixels
+    GambPang.Knots.Random
     GambPang.Knots.Tiles
   build-depends:
       attoparsec
     , colour ^>=2.3.5
     , containers ^>=0.6
+    , random ^>= 1.2
 
 executable gambpang-knots
   import: core
