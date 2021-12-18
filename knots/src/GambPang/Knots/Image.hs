@@ -2,9 +2,8 @@ module GambPang.Knots.Image (
     imageToPattern,
 ) where
 
-import Codec.Picture (Image, Pixel8)
-import qualified Codec.Picture as P
-import qualified Codec.Picture.Types as P
+import Codec.Picture (Image, Pixel8, imageHeight, imageWidth)
+import Codec.Picture.Types (pixelFold)
 import qualified Data.Set as Set
 import GambPang.Knots.Pattern (
     EdgePosition (..),
@@ -24,10 +23,10 @@ imageToPattern threshold img =
     basePattern{blockedEdges = blockedEdges basePattern <> imgMaskedEdges}
   where
     basePattern = newPattern w h
-    w = P.imageWidth img
-    h = P.imageHeight img
+    w = imageWidth img
+    h = imageHeight img
 
-    imgMaskedEdges = P.pixelFold (argCycle analyzePixel) mempty img
+    imgMaskedEdges = pixelFold (argCycle analyzePixel) mempty img
     analyzePixel x y thePixel
         | thePixel >= threshold =
             ( <>

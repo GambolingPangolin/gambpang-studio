@@ -34,7 +34,7 @@ import GambPang.Knots.Pattern.Encoding (
     toWorksheet,
  )
 import GambPang.Knots.Pixels (crop, readPixel, rotate, toGrayscale)
-import GambPang.Knots.Random (randomPattern)
+import GambPang.Knots.Random (randomByImage, randomPattern)
 import GambPang.Knots.Tiles (TileConfig (..))
 import qualified Options.Applicative as Opt
 
@@ -68,11 +68,19 @@ data ConvertOptions = ConvertOptions
     }
     deriving (Eq, Show)
 
+data UniformRandomOptions = UniformRandomOptions
+    { uniformRandomWidth :: Int
+    , uniformRandomHeight :: Int
+    , uniformRandomDensity :: Double
+    }
+    deriving (Eq, Show)
+
+data RandomMode = UniformRandom UniformRandomOptions | ImageRandom FilePath
+    deriving (Eq, Show)
+
 data RandomOptions = RandomOptions
     { randomOutput :: FilePath
-    , randomWidth :: Int
-    , randomHeight :: Int
-    , randomDensity :: Double
+    , randomMode :: RandomMode
     , randomForeground :: PixelRGBA8
     , randomBackground :: PixelRGBA8
     }
@@ -174,7 +182,7 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
         Opt.strOption $
             Opt.long "input"
                 <> Opt.short 'i'
-                <> Opt.help "The image to convert"
+                <> Opt.help "The source image"
     optConvertOutputType =
         Opt.flag OutputImage OutputWorksheet $
             Opt.long "worksheet" <> Opt.help "Produce a worksheet instead of an image"
@@ -191,11 +199,17 @@ getOptions = Opt.execParser $ Opt.info (opts <**> Opt.helper) desc
     randomOptions =
         RandomOptions
             <$> optOutputFile
-            <*> optWidth
-            <*> optHeight
-            <*> optDensity
+            <*> optRandomMode
             <*> optForeground
             <*> optBackground
+    optRandomMode =
+        UniformRandom <$> optUniformRandom
+            <|> ImageRandom <$> optInputImage
+    optUniformRandom =
+        UniformRandomOptions
+            <$> optWidth
+            <*> optHeight
+            <*> optDensity
     optDensity =
         Opt.option Opt.auto $
             Opt.short 'd'
@@ -253,7 +267,16 @@ convertImage opts =
 
 randomKnot :: RandomOptions -> IO ()
 randomKnot opts = do
-    thePattern <- randomPattern opts.randomDensity opts.randomWidth opts.randomHeight
+    thePattern <- case randomMode opts of
+        UniformRandom modeOpts ->
+            randomPattern
+                modeOpts.uniformRandomDensity
+                modeOpts.uniformRandomWidth
+                modeOpts.uniformRandomHeight
+        ImageRandom theInputFile ->
+            BS.readFile theInputFile
+                >>= either (throwIO . ImageDecodeError) pure . decodePng
+                >>= randomByImage . toGrayscale
     either
         (throwIO . KnotRenderError)
         pure
